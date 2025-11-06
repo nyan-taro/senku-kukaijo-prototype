@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>川柳句会システム - ドラクエ風</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- ログイン画面 -->
+    <div id="login-screen" class="screen">
+        <div class="dq-window login-window">
+            <h1 class="title">せんくくかいじょ</h1>
+            <div class="login-form">
+                <div class="input-group">
+                    <label>なまえを いれてください</label>
+                    <input type="text" id="username-input" maxlength="8" class="dq-input">
+                </div>
+                <div class="input-group">
+                    <label>せんしゃですか？</label>
+                    <div class="radio-group">
+                        <label>
+                            <input type="radio" name="role" value="general" checked>
+                            いっぱん
+                        </label>
+                        <label>
+                            <input type="radio" name="role" value="selector">
+                            せんしゃ
+                        </label>
+                    </div>
+                </div>
+                <button id="login-btn" class="dq-button">はじめる</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- メイン画面 -->
+    <div id="main-screen" class="screen" style="display: none;">
+        <div class="container">
+            <!-- 左ペイン：チャット＆操作 -->
+            <div class="left-pane">
+                <div class="dq-window">
+                    <div class="status-bar">
+                        <span id="user-name-display"></span>
+                        <span id="user-role-display"></span>
+                    </div>
+                </div>
+
+                <!-- 一般ユーザー用UI -->
+                <div id="general-ui" class="user-ui">
+                    <div class="dq-window">
+                        <h3>とうく</h3>
+                        <textarea id="senryu-input" class="dq-textarea" placeholder="かみのく（5-7-5）&#10;なかのく&#10;しものく" rows="3"></textarea>
+                        <button id="submit-senryu-btn" class="dq-button">とうく する</button>
+                    </div>
+
+                    <div class="dq-window chat-window">
+                        <h3>チャット</h3>
+                        <div id="chat-log" class="chat-log"></div>
+                        <div class="chat-input-area">
+                            <input type="text" id="chat-input" class="dq-input" placeholder="メッセージを にゅうりょく">
+                            <button id="send-chat-btn" class="dq-button-small">そうしん</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 選者用UI -->
+                <div id="selector-ui" class="user-ui" style="display: none;">
+                    <div class="dq-window">
+                        <h3>とうくいちらん</h3>
+                        <div id="senryu-list" class="senryu-list"></div>
+                        <button id="announce-btn" class="dq-button">ひこう する</button>
+                    </div>
+
+                    <div class="dq-window chat-window">
+                        <h3>チャット</h3>
+                        <div id="chat-log-selector" class="chat-log"></div>
+                        <div class="chat-input-area">
+                            <input type="text" id="chat-input-selector" class="dq-input" placeholder="メッセージを にゅうりょく">
+                            <button id="send-chat-selector-btn" class="dq-button-small">そうしん</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右ペイン：教室マップ -->
+            <div class="right-pane">
+                <div class="dq-window">
+                    <h3>きょうしつ</h3>
+                    <div id="classroom-map" class="classroom-map">
+                        <!-- マップはJavaScriptで生成 -->
+                    </div>
+                    <div class="controls">
+                        <div class="d-pad">
+                            <button class="d-pad-btn up" data-dir="up">↑</button>
+                            <button class="d-pad-btn left" data-dir="left">←</button>
+                            <button class="d-pad-btn down" data-dir="down">↓</button>
+                            <button class="d-pad-btn right" data-dir="right">→</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 披講画面 -->
+    <div id="announcement-screen" class="screen" style="display: none;">
+        <div class="dq-window announcement-window">
+            <h2>にゅうせんく はっぴょう</h2>
+            <div id="announcement-content" class="announcement-content"></div>
+            <button id="close-announcement-btn" class="dq-button">とじる</button>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
