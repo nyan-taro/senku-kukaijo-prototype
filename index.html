@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>川柳句会場</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- ログイン画面 -->
+    <div id="loginScreen" class="screen">
+        <div class="login-container">
+            <h1>川柳句会場へようこそ</h1>
+
+            <div class="login-section">
+                <h2>役割を選択</h2>
+                <div class="role-buttons">
+                    <button class="role-btn" data-role="host">主催者</button>
+                    <button class="role-btn" data-role="selector">選者</button>
+                    <button class="role-btn" data-role="general">一般</button>
+                </div>
+            </div>
+
+            <div class="login-section" id="characterSection" style="display: none;">
+                <h2>キャラクターを選択</h2>
+                <div class="character-buttons">
+                    <button class="char-btn" data-char="male">
+                        <canvas class="char-preview" data-char="male"></canvas>
+                        <span>男性</span>
+                    </button>
+                    <button class="char-btn" data-char="female">
+                        <canvas class="char-preview" data-char="female"></canvas>
+                        <span>女性</span>
+                    </button>
+                    <button class="char-btn" data-char="cat">
+                        <canvas class="char-preview" data-char="cat"></canvas>
+                        <span>猫</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="login-section" id="nameSection" style="display: none;">
+                <h2>名前を入力</h2>
+                <input type="text" id="nameInput" placeholder="お名前を入力してください" maxlength="20">
+                <button id="enterGardenBtn" disabled>お庭へ入る</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- お庭画面 -->
+    <div id="gardenScreen" class="screen" style="display: none;">
+        <div class="garden-container">
+            <h2>お庭</h2>
+            <canvas id="gardenCanvas" width="800" height="600"></canvas>
+            <div class="garden-info">
+                <p>矢印キーで移動、ドアに近づいて教室に入ろう！</p>
+            </div>
+            <button id="logoutFromGardenBtn" class="control-btn">ログアウト</button>
+        </div>
+    </div>
+
+    <!-- 教室画面 -->
+    <div id="classroomScreen" class="screen" style="display: none;">
+        <div class="mobile-tabs">
+            <button class="tab-btn active" data-tab="classroom">教室</button>
+            <button class="tab-btn" data-tab="chat">チャット</button>
+        </div>
+
+        <div class="classroom-container">
+            <div class="classroom-view" id="classroomView">
+                <h2 id="classroomTitle">教室A</h2>
+                <canvas id="classroomCanvas" width="600" height="450"></canvas>
+                <div class="classroom-controls">
+                    <button id="exitClassroomBtn" class="control-btn">教室から出る</button>
+                    <button id="logoutFromClassBtn" class="control-btn">ログアウト</button>
+                    <button id="endSessionBtn" class="control-btn host-only" style="display: none;">句会を終了する</button>
+                </div>
+            </div>
+
+            <div class="chat-view" id="chatView">
+                <div class="chat-container">
+                    <h3>チャット</h3>
+                    <div id="chatMessages" class="chat-messages"></div>
+                    <div class="chat-input-container">
+                        <input type="text" id="chatInput" placeholder="メッセージを入力...">
+                        <button id="sendChatBtn">送信</button>
+                    </div>
+                </div>
+
+                <div class="haiku-container">
+                    <h3>投句欄</h3>
+                    <div id="haikuList" class="haiku-list"></div>
+                    <div class="haiku-input-container">
+                        <input type="text" id="haikuInput" placeholder="川柳を一行で入力（改行不可）" maxlength="100">
+                        <button id="submitHaikuBtn">投句</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="sprites.js"></script>
+    <script src="game.js"></script>
+</body>
+</html>

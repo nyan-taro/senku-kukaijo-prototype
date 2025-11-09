@@ -1,0 +1,389 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Hiragino Kaku Gothic Pro', 'Meiryo', sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.screen {
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* ログイン画面 */
+.login-container {
+    background: white;
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    max-width: 500px;
+    width: 90%;
+}
+
+.login-container h1 {
+    text-align: center;
+    color: #667eea;
+    margin-bottom: 30px;
+}
+
+.login-section {
+    margin-bottom: 30px;
+}
+
+.login-section h2 {
+    font-size: 18px;
+    color: #333;
+    margin-bottom: 15px;
+}
+
+.role-buttons, .character-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.role-btn, .char-btn {
+    padding: 15px 25px;
+    border: 2px solid #667eea;
+    background: white;
+    color: #667eea;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.3s;
+}
+
+.role-btn:hover, .char-btn:hover {
+    background: #667eea;
+    color: white;
+    transform: translateY(-2px);
+}
+
+.role-btn.selected, .char-btn.selected {
+    background: #667eea;
+    color: white;
+}
+
+.role-btn:disabled {
+    background: #ccc;
+    border-color: #ccc;
+    color: #666;
+    cursor: not-allowed;
+}
+
+.char-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 15px;
+}
+
+.char-preview {
+    width: 48px;
+    height: 48px;
+    image-rendering: pixelated;
+    border: 2px solid #ddd;
+    border-radius: 5px;
+}
+
+#nameInput {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 16px;
+    margin-bottom: 15px;
+}
+
+#enterGardenBtn {
+    width: 100%;
+    padding: 15px;
+    background: #667eea;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 18px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+#enterGardenBtn:hover:not(:disabled) {
+    background: #5568d3;
+    transform: translateY(-2px);
+}
+
+#enterGardenBtn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+/* お庭画面 */
+.garden-container {
+    background: white;
+    padding: 20px;
+    border-radius: 20px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    text-align: center;
+}
+
+.garden-container h2 {
+    color: #667eea;
+    margin-bottom: 20px;
+}
+
+#gardenCanvas {
+    border: 3px solid #667eea;
+    border-radius: 10px;
+    background: #87CEEB;
+    image-rendering: pixelated;
+    display: block;
+    margin: 0 auto;
+}
+
+.garden-info {
+    margin: 15px 0;
+    color: #666;
+}
+
+/* 教室画面 */
+.classroom-container {
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    background: white;
+}
+
+.classroom-view {
+    flex: 1;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: #f5f5f5;
+}
+
+.classroom-view h2 {
+    color: #667eea;
+    margin-bottom: 20px;
+}
+
+#classroomCanvas {
+    border: 3px solid #667eea;
+    border-radius: 10px;
+    background: #f0e6d2;
+    image-rendering: pixelated;
+    margin-bottom: 20px;
+}
+
+.classroom-controls {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.control-btn {
+    padding: 10px 20px;
+    background: #667eea;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s;
+}
+
+.control-btn:hover {
+    background: #5568d3;
+}
+
+#endSessionBtn {
+    background: #e74c3c;
+}
+
+#endSessionBtn:hover {
+    background: #c0392b;
+}
+
+.chat-view {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    border-left: 2px solid #ddd;
+}
+
+.chat-container, .haiku-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+}
+
+.haiku-container {
+    border-top: 2px solid #ddd;
+}
+
+.chat-container h3, .haiku-container h3 {
+    color: #667eea;
+    margin-bottom: 15px;
+}
+
+.chat-messages, .haiku-list {
+    flex: 1;
+    overflow-y: auto;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    padding: 15px;
+    background: white;
+    margin-bottom: 15px;
+    max-height: 300px;
+}
+
+.chat-message {
+    margin-bottom: 10px;
+    padding: 8px;
+    border-radius: 5px;
+    background: #f0f0f0;
+}
+
+.chat-message .name {
+    font-weight: bold;
+    color: #667eea;
+}
+
+.chat-message .time {
+    font-size: 12px;
+    color: #999;
+    margin-left: 10px;
+}
+
+.haiku-item {
+    margin-bottom: 10px;
+    padding: 10px;
+    border-left: 3px solid #667eea;
+    background: #f9f9f9;
+}
+
+.haiku-item .author {
+    font-weight: bold;
+    color: #764ba2;
+    margin-bottom: 5px;
+}
+
+.haiku-item .text {
+    color: #333;
+    font-size: 16px;
+}
+
+.chat-input-container, .haiku-input-container {
+    display: flex;
+    gap: 10px;
+}
+
+.chat-input-container input, .haiku-input-container input {
+    flex: 1;
+    padding: 10px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+#haikuInput {
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.chat-input-container button, .haiku-input-container button {
+    padding: 10px 20px;
+    background: #667eea;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s;
+}
+
+.chat-input-container button:hover, .haiku-input-container button:hover {
+    background: #5568d3;
+}
+
+/* モバイルタブ（デフォルトは非表示） */
+.mobile-tabs {
+    display: none;
+}
+
+/* スマホ対応 */
+@media (max-width: 600px) {
+    .mobile-tabs {
+        display: flex;
+        background: #667eea;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+    }
+
+    .tab-btn {
+        flex: 1;
+        padding: 15px;
+        background: #667eea;
+        color: white;
+        border: none;
+        font-size: 16px;
+        cursor: pointer;
+        border-bottom: 3px solid transparent;
+    }
+
+    .tab-btn.active {
+        background: #5568d3;
+        border-bottom-color: white;
+    }
+
+    .classroom-container {
+        flex-direction: column;
+    }
+
+    .classroom-view, .chat-view {
+        display: none;
+    }
+
+    .classroom-view.active, .chat-view.active {
+        display: flex;
+    }
+
+    .chat-view {
+        border-left: none;
+        border-top: 2px solid #ddd;
+    }
+
+    #gardenCanvas {
+        max-width: 100%;
+        height: auto;
+    }
+
+    #classroomCanvas {
+        max-width: 100%;
+        height: auto;
+    }
+
+    .login-container {
+        padding: 20px;
+    }
+
+    .garden-container {
+        padding: 10px;
+    }
+}
