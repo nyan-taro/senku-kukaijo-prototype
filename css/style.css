@@ -663,3 +663,103 @@ body {
     background-color: #ccc;
     cursor: not-allowed;
 }
+
+/* 投句欄タブのスタイル */
+.haiku-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.haiku-tab-btn {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    background-color: #a8d5a8;
+    color: #333;
+    transition: all 0.3s;
+}
+
+.haiku-tab-btn.active {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.haiku-tab-btn:hover {
+    opacity: 0.9;
+}
+
+/* 作品一覧タブ（緑色） */
+.theme-tab {
+    background-color: #a8d5a8 !important;
+    color: #333 !important;
+}
+
+.theme-tab.active {
+    background-color: #4CAF50 !important;
+    color: white !important;
+}
+
+/* 投句一覧をスクロール可能に */
+.haiku-list {
+    max-height: 400px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 10px;
+}
+
+.haiku-list::-webkit-scrollbar {
+    width: 8px;
+}
+
+.haiku-list::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.haiku-list::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+.haiku-list::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* 全幅メッセージ（披講・呼名・ログイン） */
+.message-fullwidth {
+    align-self: stretch !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    text-align: center;
+}
+
+.message-login {
+    background-color: #e8f5e9 !important;
+    color: #2e7d32;
+    font-weight: bold;
+    padding: 8px;
+    border-radius: 4px;
+}
+
+.message-announcement {
+    background-color: #fff3e0 !important;
+    color: #e65100;
+    font-weight: bold;
+    padding: 8px;
+    border-radius: 4px;
+}
+
+.message-callout {
+    background-color: #fce4ec !important;
+    color: #c2185b;
+    font-weight: bold;
+    font-size: 18px;
+    padding: 10px;
+    border-radius: 4px;
+}

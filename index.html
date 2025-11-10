@@ -87,19 +87,31 @@
 
             <!-- 投句欄（一般のみ） -->
             <div id="haiku-area" class="haiku-area" style="display: none;">
-                <h3>投句（二句まで）</h3>
+                <h3>投句（各課題二句まで）</h3>
                 <div class="haiku-form">
-                    <div class="theme-selector">
-                        <button type="button" class="theme-btn active" data-theme="1">課題 <span id="theme1-display">①</span></button>
-                        <button type="button" class="theme-btn" data-theme="2">課題 <span id="theme2-display">②</span></button>
+                    <div class="haiku-tabs">
+                        <button type="button" class="haiku-tab-btn active" data-tab="1">課題 <span id="haiku-tab-theme1">①</span></button>
+                        <button type="button" class="haiku-tab-btn" data-tab="2">課題 <span id="haiku-tab-theme2">②</span></button>
                     </div>
-                    <div class="haiku-input-row">
-                        <input type="text" id="haiku-input-1" placeholder="川柳を入力..." maxlength="30">
-                        <button type="button" id="haiku-submit-1">投句する</button>
+                    <div id="haiku-inputs-1" class="haiku-inputs" style="display: block;">
+                        <div class="haiku-input-row">
+                            <input type="text" id="haiku-input-1-1" placeholder="川柳を入力..." maxlength="30">
+                            <button type="button" id="haiku-submit-1-1">投句する</button>
+                        </div>
+                        <div class="haiku-input-row">
+                            <input type="text" id="haiku-input-1-2" placeholder="川柳を入力..." maxlength="30">
+                            <button type="button" id="haiku-submit-1-2">投句する</button>
+                        </div>
                     </div>
-                    <div class="haiku-input-row">
-                        <input type="text" id="haiku-input-2" placeholder="川柳を入力..." maxlength="30">
-                        <button type="button" id="haiku-submit-2">投句する</button>
+                    <div id="haiku-inputs-2" class="haiku-inputs" style="display: none;">
+                        <div class="haiku-input-row">
+                            <input type="text" id="haiku-input-2-1" placeholder="川柳を入力..." maxlength="30">
+                            <button type="button" id="haiku-submit-2-1">投句する</button>
+                        </div>
+                        <div class="haiku-input-row">
+                            <input type="text" id="haiku-input-2-2" placeholder="川柳を入力..." maxlength="30">
+                            <button type="button" id="haiku-submit-2-2">投句する</button>
+                        </div>
                     </div>
                 </div>
             </div>
