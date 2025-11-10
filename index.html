@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>俳句句会アプリ</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
+</head>
+<body>
+    <!-- ログイン画面 -->
+    <div id="login-screen" class="screen">
+        <div class="login-card">
+            <h1>俳句句会へようこそ</h1>
+
+            <div id="continue-section" style="display: none;">
+                <button id="continue-btn" class="continue-button">前回のつづき</button>
+                <p id="saved-info" class="saved-info"></p>
+            </div>
+
+            <form id="login-form">
+                <div class="form-group">
+                    <label>役割を選択</label>
+                    <select id="role-select">
+                        <option value="participant">一般参加者</option>
+                        <option value="judge">選者</option>
+                        <option value="host">主催者</option>
+                    </select>
+                </div>
+
+                <div id="room-name-group" class="form-group" style="display: none;">
+                    <label>教室名</label>
+                    <input type="text" id="room-name-input" placeholder="例: 春の句会">
+                </div>
+
+                <div class="form-group">
+                    <label>お名前</label>
+                    <input type="text" id="name-input" placeholder="本名を入力" required>
+                </div>
+
+                <div class="form-group">
+                    <label>キャラクター名</label>
+                    <input type="text" id="character-name-input" placeholder="ニックネームを入力" required>
+                </div>
+
+                <button type="submit" class="submit-button">入室する</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- メイン画面 -->
+    <div id="main-screen" class="screen" style="display: none;">
+        <!-- ゲームビュー（教室/お庭） -->
+        <div id="game-pane" class="game-pane">
+            <div class="game-header">
+                <h2 id="location-title">お庭</h2>
+                <button id="enter-classroom-btn" class="enter-button">教室に入る</button>
+            </div>
+            <div id="game-container"></div>
+        </div>
+
+        <!-- チャットペイン -->
+        <div id="chat-pane" class="chat-pane">
+            <!-- ヘッダー -->
+            <div class="chat-header">
+                <span id="login-info"></span>
+            </div>
+
+            <!-- チャット欄 -->
+            <div id="chat-area" class="chat-area">
+                <h3>チャット</h3>
+                <div id="messages-container" class="messages-container"></div>
+                <form id="chat-form" class="input-form">
+                    <input type="text" id="chat-input" placeholder="メッセージを入力...">
+                    <button type="submit">送信</button>
+                </form>
+            </div>
+
+            <!-- 披講欄（主催者・選者のみ） -->
+            <div id="hikikou-area" class="hikikou-area" style="display: none;">
+                <h3>披講</h3>
+                <div class="hikikou-input-container">
+                    <input type="text" id="hikikou-input" placeholder="披講する句を入力...">
+                    <button id="hikikou-btn" class="hikikou-button">披講ボタン</button>
+                </div>
+            </div>
+
+            <!-- 投句欄（一般のみ） -->
+            <div id="haiku-area" class="haiku-area" style="display: none;">
+                <h3>投句</h3>
+                <form id="haiku-form" class="haiku-form">
+                    <textarea id="haiku-input" placeholder="俳句を入力..." rows="3"></textarea>
+                    <button type="submit">投句する</button>
+                </form>
+            </div>
+
+            <!-- 作品一覧（主催者・選者） -->
+            <div id="haiku-list-area" class="haiku-list-area" style="display: none;">
+                <h3>投句作品一覧</h3>
+                <div id="haiku-list" class="haiku-list"></div>
+            </div>
+
+            <!-- ボタンエリア -->
+            <div id="button-area" class="button-area">
+                <button id="callout-btn" class="action-button" style="display: none;">呼名する</button>
+                <button id="go-garden-btn" class="action-button">お庭にいく</button>
+                <button id="leave-btn" class="action-button">教室から出る</button>
+                <button id="end-session-btn" class="end-button" style="display: none;">句会を終了する</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/scenes/classroom.js"></script>
+    <script src="js/scenes/garden.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
