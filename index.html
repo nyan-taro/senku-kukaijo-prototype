@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="千空句会所 - シンプルなメモ管理アプリ">
+    <title>千空句会所 - Prototype</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎋 千空句会所</h1>
+            <p class="subtitle">シンプルなメモ管理アプリ</p>
+        </header>
+
+        <main>
+            <section class="input-section">
+                <div class="form-group">
+                    <input
+                        type="text"
+                        id="itemTitle"
+                        placeholder="タイトルを入力..."
+                        class="input-field"
+                    >
+                </div>
+                <div class="form-group">
+                    <textarea
+                        id="itemContent"
+                        placeholder="内容を入力..."
+                        class="textarea-field"
+                        rows="4"
+                    ></textarea>
+                </div>
+                <div class="button-group">
+                    <button id="addButton" class="btn btn-primary">
+                        <span class="btn-icon">➕</span> 追加
+                    </button>
+                    <button id="cancelButton" class="btn btn-secondary" style="display: none;">
+                        <span class="btn-icon">✖</span> キャンセル
+                    </button>
+                </div>
+            </section>
+
+            <section class="items-section">
+                <div class="section-header">
+                    <h2>保存済みアイテム</h2>
+                    <div class="stats">
+                        <span id="itemCount">0</span> 件
+                    </div>
+                </div>
+                <div id="itemsList" class="items-list">
+                    <!-- アイテムがここに表示されます -->
+                </div>
+                <div id="emptyState" class="empty-state">
+                    <div class="empty-icon">📝</div>
+                    <p>まだアイテムがありません</p>
+                    <p class="empty-hint">上のフォームから新しいアイテムを追加してください</p>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>💾 データはブラウザのローカルストレージに保存されます</p>
+        </footer>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
