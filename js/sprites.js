@@ -3,70 +3,13 @@
 // ピクセル単位の大きさ
 const PIXEL_SIZE = 4;
 
-// 男性キャラのドット絵（16x16）
-function createMaleSprite(scene, x, y, frame = 0) {
+// にんげんキャラのドット絵（16x16）
+function createHumanSprite(scene, x, y, frame = 0) {
     const graphics = scene.add.graphics();
     graphics.setPosition(x - 32, y - 32);
 
     // フレーム0: 正面
     // フレーム1: 歩行
-    const pattern = frame === 0 ? [
-        '                ',
-        '    111111      ',
-        '   11111111     ',
-        '   11111111     ',
-        '    111111      ',
-        '     1111       ',
-        '    111111      ',
-        '   11111111     ',
-        '  1111111111    ',
-        '   11111111     ',
-        '    222222      ',
-        '   22222222     ',
-        '   22    22     ',
-        '   22    22     ',
-        '  222    222    ',
-        ' 2222    2222   '
-    ] : [
-        '                ',
-        '    111111      ',
-        '   11111111     ',
-        '   11111111     ',
-        '    111111      ',
-        '     1111       ',
-        '    111111      ',
-        '   11111111     ',
-        '  1111111111    ',
-        '   11111111     ',
-        '    222222      ',
-        '   22222222     ',
-        '  222    22     ',
-        '   22    222    ',
-        '   222  2222    ',
-        ' 2222    222    '
-    ];
-
-    for (let row = 0; row < pattern.length; row++) {
-        for (let col = 0; col < pattern[row].length; col++) {
-            const char = pattern[row][col];
-            if (char === '1') { // 頭・体
-                graphics.fillStyle(0x8B4513, 1);
-                graphics.fillRect(col * PIXEL_SIZE, row * PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE);
-            } else if (char === '2') { // 足
-                graphics.fillStyle(0x4169E1, 1);
-                graphics.fillRect(col * PIXEL_SIZE, row * PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE);
-            }
-        }
-    }
-
-    return graphics;
-}
-
-// 女性キャラのドット絵（16x16）
-function createFemaleSprite(scene, x, y, frame = 0) {
-    const graphics = scene.add.graphics();
-    graphics.setPosition(x - 32, y - 32);
-
     const pattern = frame === 0 ? [
         '                ',
         '    111111      ',
@@ -107,13 +50,13 @@ function createFemaleSprite(scene, x, y, frame = 0) {
         for (let col = 0; col < pattern[row].length; col++) {
             const char = pattern[row][col];
             if (char === '1') { // 頭
-                graphics.fillStyle(0xFFB6C1, 1);
+                graphics.fillStyle(0xFFDBAC, 1);
                 graphics.fillRect(col * PIXEL_SIZE, row * PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE);
             } else if (char === '2') { // 体
-                graphics.fillStyle(0xFF69B4, 1);
+                graphics.fillStyle(0x4169E1, 1);
                 graphics.fillRect(col * PIXEL_SIZE, row * PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE);
             } else if (char === '3') { // 足
-                graphics.fillStyle(0xFF1493, 1);
+                graphics.fillStyle(0x2E5090, 1);
                 graphics.fillRect(col * PIXEL_SIZE, row * PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE);
             }
         }
@@ -170,6 +113,357 @@ function createCatSprite(scene, x, y, frame = 0) {
                 graphics.fillStyle(0xFFA500, 1);
                 graphics.fillRect(col * PIXEL_SIZE, row * PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE);
             } else if (char === '2') { // 顔パーツ
+                graphics.fillStyle(0x000000, 1);
+                graphics.fillRect(col * PIXEL_SIZE, row * PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE);
+            }
+        }
+    }
+
+    return graphics;
+}
+
+// いぬキャラのドット絵（16x16）
+function createDogSprite(scene, x, y, frame = 0) {
+    const graphics = scene.add.graphics();
+    graphics.setPosition(x - 32, y - 32);
+
+    const pattern = frame === 0 ? [
+        '                ',
+        '  11      11    ',
+        '  111    111    ',
+        '   111  111     ',
+        '   11111111     ',
+        '  1111111111    ',
+        ' 111111111111   ',
+        ' 121111111121   ',
+        ' 111111111111   ',
+        ' 111122221111   ',
+        '  1111111111    ',
+        '   11111111     ',
+        '   11    11     ',
+        '   11    11     ',
+        '  111    111    ',
+        ' 1111    1111   '
+    ] : [
+        '                ',
+        '  11      11    ',
+        '  111    111    ',
+        '   111  111     ',
+        '   11111111     ',
+        '  1111111111    ',
+        ' 111111111111   ',
+        ' 121111111121   ',
+        ' 111111111111   ',
+        ' 111122221111   ',
+        '  1111111111    ',
+        '   11111111     ',
+        '  111    11     ',
+        '   11    111    ',
+        '   111  1111    ',
+        ' 1111    111    '
+    ];
+
+    for (let row = 0; row < pattern.length; row++) {
+        for (let col = 0; col < pattern[row].length; col++) {
+            const char = pattern[row][col];
+            if (char === '1') { // 体
+                graphics.fillStyle(0x8B4513, 1);
+                graphics.fillRect(col * PIXEL_SIZE, row * PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE);
+            } else if (char === '2') { // 顔パーツ
+                graphics.fillStyle(0x000000, 1);
+                graphics.fillRect(col * PIXEL_SIZE, row * PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE);
+            }
+        }
+    }
+
+    return graphics;
+}
+
+// うさぎキャラのドット絵（16x16）
+function createRabbitSprite(scene, x, y, frame = 0) {
+    const graphics = scene.add.graphics();
+    graphics.setPosition(x - 32, y - 32);
+
+    const pattern = frame === 0 ? [
+        '   11    11     ',
+        '   11    11     ',
+        '   11    11     ',
+        '   11    11     ',
+        '   1111111      ',
+        '  111111111     ',
+        ' 11111111111    ',
+        ' 12111111121    ',
+        ' 11111111111    ',
+        ' 11112222111    ',
+        '  1111111111    ',
+        '   11111111     ',
+        '   11    11     ',
+        '   11    11     ',
+        '  111    111    ',
+        ' 1111    1111   '
+    ] : [
+        '   11    11     ',
+        '   11    11     ',
+        '   11    11     ',
+        '   11    11     ',
+        '   1111111      ',
+        '  111111111     ',
+        ' 11111111111    ',
+        ' 12111111121    ',
+        ' 11111111111    ',
+        ' 11112222111    ',
+        '  1111111111    ',
+        '   11111111     ',
+        '  111    11     ',
+        '   11    111    ',
+        '   111  1111    ',
+        ' 1111    111    '
+    ];
+
+    for (let row = 0; row < pattern.length; row++) {
+        for (let col = 0; col < pattern[row].length; col++) {
+            const char = pattern[row][col];
+            if (char === '1') { // 体
+                graphics.fillStyle(0xFFFFFF, 1);
+                graphics.fillRect(col * PIXEL_SIZE, row * PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE);
+            } else if (char === '2') { // 顔パーツ
+                graphics.fillStyle(0xFFB6C1, 1);
+                graphics.fillRect(col * PIXEL_SIZE, row * PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE);
+            }
+        }
+    }
+
+    return graphics;
+}
+
+// らいおんキャラのドット絵（16x16）
+function createLionSprite(scene, x, y, frame = 0) {
+    const graphics = scene.add.graphics();
+    graphics.setPosition(x - 32, y - 32);
+
+    const pattern = frame === 0 ? [
+        '  222  2  222   ',
+        ' 2222222222222  ',
+        ' 2211111111122  ',
+        '2211111111111122',
+        '2111111111111112',
+        '2131111111111312',
+        '2111111111111112',
+        '2111144441111112',
+        ' 211111111112   ',
+        '  1111111111    ',
+        '   11111111     ',
+        '   11111111     ',
+        '   11    11     ',
+        '   11    11     ',
+        '  111    111    ',
+        ' 1111    1111   '
+    ] : [
+        '  222  2  222   ',
+        ' 2222222222222  ',
+        ' 2211111111122  ',
+        '2211111111111122',
+        '2111111111111112',
+        '2131111111111312',
+        '2111111111111112',
+        '2111144441111112',
+        ' 211111111112   ',
+        '  1111111111    ',
+        '   11111111     ',
+        '   11111111     ',
+        '  111    11     ',
+        '   11    111    ',
+        '   111  1111    ',
+        ' 1111    111    '
+    ];
+
+    for (let row = 0; row < pattern.length; row++) {
+        for (let col = 0; col < pattern[row].length; col++) {
+            const char = pattern[row][col];
+            if (char === '1') { // 体
+                graphics.fillStyle(0xFFD700, 1);
+                graphics.fillRect(col * PIXEL_SIZE, row * PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE);
+            } else if (char === '2') { // たてがみ
+                graphics.fillStyle(0xFFA500, 1);
+                graphics.fillRect(col * PIXEL_SIZE, row * PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE);
+            } else if (char === '3') { // 目
+                graphics.fillStyle(0x000000, 1);
+                graphics.fillRect(col * PIXEL_SIZE, row * PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE);
+            } else if (char === '4') { // 鼻
+                graphics.fillStyle(0x8B4513, 1);
+                graphics.fillRect(col * PIXEL_SIZE, row * PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE);
+            }
+        }
+    }
+
+    return graphics;
+}
+
+// ぞうキャラのドット絵（16x16）
+function createElephantSprite(scene, x, y, frame = 0) {
+    const graphics = scene.add.graphics();
+    graphics.setPosition(x - 32, y - 32);
+
+    const pattern = frame === 0 ? [
+        '                ',
+        '   1111111      ',
+        '  111111111     ',
+        ' 11111111111    ',
+        ' 11211111211    ',
+        ' 11111111111    ',
+        ' 11111111111    ',
+        '  1111111111    ',
+        '   111111111    ',
+        '    11111111    ',
+        '    11111111    ',
+        '    11111111    ',
+        '   111  1111    ',
+        '   11    111    ',
+        '  111    1111   ',
+        ' 1111    11111  '
+    ] : [
+        '                ',
+        '   1111111      ',
+        '  111111111     ',
+        ' 11111111111    ',
+        ' 11211111211    ',
+        ' 11111111111    ',
+        ' 11111111111    ',
+        '  1111111111    ',
+        '   111111111    ',
+        '    11111111    ',
+        '    11111111    ',
+        '    11111111    ',
+        '  1111  111     ',
+        '   111   11     ',
+        '   111   111    ',
+        ' 11111   11111  '
+    ];
+
+    for (let row = 0; row < pattern.length; row++) {
+        for (let col = 0; col < pattern[row].length; col++) {
+            const char = pattern[row][col];
+            if (char === '1') { // 体
+                graphics.fillStyle(0x808080, 1);
+                graphics.fillRect(col * PIXEL_SIZE, row * PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE);
+            } else if (char === '2') { // 目
+                graphics.fillStyle(0x000000, 1);
+                graphics.fillRect(col * PIXEL_SIZE, row * PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE);
+            }
+        }
+    }
+
+    return graphics;
+}
+
+// ぱんだキャラのドット絵（16x16）
+function createPandaSprite(scene, x, y, frame = 0) {
+    const graphics = scene.add.graphics();
+    graphics.setPosition(x - 32, y - 32);
+
+    const pattern = frame === 0 ? [
+        '                ',
+        '   22    22     ',
+        '  2222  2222    ',
+        '  2211111122    ',
+        ' 211111111112   ',
+        ' 211111111112   ',
+        ' 221111111122   ',
+        ' 211111111112   ',
+        ' 211133331112   ',
+        '  2111111112    ',
+        '   21111112     ',
+        '   11111111     ',
+        '   11    11     ',
+        '   22    22     ',
+        '  222    222    ',
+        ' 2222    2222   '
+    ] : [
+        '                ',
+        '   22    22     ',
+        '  2222  2222    ',
+        '  2211111122    ',
+        ' 211111111112   ',
+        ' 211111111112   ',
+        ' 221111111122   ',
+        ' 211111111112   ',
+        ' 211133331112   ',
+        '  2111111112    ',
+        '   21111112     ',
+        '   11111111     ',
+        '  222    11     ',
+        '   22    222    ',
+        '   222  2222    ',
+        ' 2222    222    '
+    ];
+
+    for (let row = 0; row < pattern.length; row++) {
+        for (let col = 0; col < pattern[row].length; col++) {
+            const char = pattern[row][col];
+            if (char === '1') { // 白い部分
+                graphics.fillStyle(0xFFFFFF, 1);
+                graphics.fillRect(col * PIXEL_SIZE, row * PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE);
+            } else if (char === '2') { // 黒い部分
+                graphics.fillStyle(0x000000, 1);
+                graphics.fillRect(col * PIXEL_SIZE, row * PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE);
+            } else if (char === '3') { // 鼻
+                graphics.fillStyle(0x8B4513, 1);
+                graphics.fillRect(col * PIXEL_SIZE, row * PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE);
+            }
+        }
+    }
+
+    return graphics;
+}
+
+// すずめキャラのドット絵（16x16）
+function createSparrowSprite(scene, x, y, frame = 0) {
+    const graphics = scene.add.graphics();
+    graphics.setPosition(x - 32, y - 32);
+
+    const pattern = frame === 0 ? [
+        '                ',
+        '                ',
+        '                ',
+        '                ',
+        '     1111       ',
+        '    111111      ',
+        '   11111111     ',
+        '   12111121     ',
+        '   11111111     ',
+        '  1111221111    ',
+        '  111111111     ',
+        '   1111111      ',
+        '   11  111      ',
+        '   11   11      ',
+        '  111   111     ',
+        ' 1111   1111    '
+    ] : [
+        '                ',
+        '                ',
+        '                ',
+        '                ',
+        '     1111       ',
+        '    111111      ',
+        '   11111111     ',
+        '   12111121     ',
+        '   11111111     ',
+        '  1111221111    ',
+        '  111111111     ',
+        '   1111111      ',
+        '  111   11      ',
+        '   11   111     ',
+        '   111  111     ',
+        ' 1111   1111    '
+    ];
+
+    for (let row = 0; row < pattern.length; row++) {
+        for (let col = 0; col < pattern[row].length; col++) {
+            const char = pattern[row][col];
+            if (char === '1') { // 体
+                graphics.fillStyle(0xD2691E, 1);
+                graphics.fillRect(col * PIXEL_SIZE, row * PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE);
+            } else if (char === '2') { // 目・くちばし
                 graphics.fillStyle(0x000000, 1);
                 graphics.fillRect(col * PIXEL_SIZE, row * PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE);
             }

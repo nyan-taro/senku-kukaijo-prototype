@@ -518,3 +518,148 @@ body {
         z-index: 9999;
     }
 }
+
+/* チャットメッセージの左右寄せ */
+.message {
+    display: flex;
+    flex-direction: column;
+    max-width: 70%;
+}
+
+.message.message-self {
+    align-self: flex-start;
+    background-color: #e3f2fd !important;
+    margin-right: auto;
+}
+
+.message.message-other {
+    align-self: flex-end;
+    background-color: #f5f5f5 !important;
+    margin-left: auto;
+}
+
+.message-login {
+    align-self: flex-end;
+    font-size: 11px;
+    color: #999;
+    margin-left: auto;
+    background: none !important;
+    padding: 2px 10px;
+}
+
+/* 課題選択ボタン */
+.theme-selector {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.theme-btn {
+    flex: 1;
+    padding: 8px;
+    background-color: #f0f0f0;
+    border: 2px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.theme-btn.active {
+    background-color: #2196F3;
+    color: white;
+    border-color: #2196F3;
+}
+
+.theme-btn:hover {
+    background-color: #e0e0e0;
+}
+
+.theme-btn.active:hover {
+    background-color: #1976D2;
+}
+
+/* 投句入力行 */
+.haiku-input-row {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 8px;
+}
+
+.haiku-input-row input {
+    flex: 1;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.haiku-input-row button {
+    padding: 8px 16px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    white-space: nowrap;
+}
+
+.haiku-input-row button:hover {
+    background-color: #45a049;
+}
+
+.haiku-input-row button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+/* タブ表示 */
+.haiku-list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.haiku-list-header h3 {
+    margin: 0;
+}
+
+.theme-tabs {
+    display: flex;
+    gap: 5px;
+}
+
+.theme-tab {
+    padding: 6px 12px;
+    background-color: #f0f0f0;
+    border: 1px solid #ddd;
+    border-radius: 4px 4px 0 0;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.theme-tab.active {
+    background-color: #2196F3;
+    color: white;
+    border-color: #2196F3;
+}
+
+.theme-tab:hover {
+    background-color: #e0e0e0;
+}
+
+.theme-tab.active:hover {
+    background-color: #1976D2;
+}
+
+/* 投句アイテム（行間縮小） */
+.haiku-item {
+    margin-bottom: 6px !important;
+    padding: 6px 10px !important;
+}
+
+.haiku-item .display-button.disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}

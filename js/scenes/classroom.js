@@ -14,6 +14,7 @@ class ClassroomScene extends Phaser.Scene {
         this.blackboardText = null;
         this.desks = [];
         this.podium = null;
+        this.exitDoor = null;
         this.walkFrame = 0;
         this.walkTimer = 0;
     }
@@ -71,8 +72,25 @@ class ClassroomScene extends Phaser.Scene {
             }
         }
 
+        // 出口ドア（下部中央）
+        const doorX = this.scale.width / 2;
+        const doorY = this.scale.height - 10;
+        const doorWidth = 60;
+        const doorHeight = 30;
+
+        // ドア本体
+        this.exitDoor = this.add.rectangle(doorX, doorY, doorWidth, doorHeight, 0x654321);
+        this.exitDoor.setOrigin(0.5, 1);
+
+        // ドアラベル
+        this.add.text(doorX, doorY - doorHeight / 2, '出口', {
+            fontSize: '12px',
+            color: '#ffffff',
+            fontWeight: 'bold'
+        }).setOrigin(0.5);
+
         // プレイヤー作成（ドット絵）
-        this.createPlayer(this.scale.width / 2, this.scale.height - 100);
+        this.createPlayer(this.scale.width / 2, this.scale.height - 150);
 
         // キーボード入力
         this.cursors = this.input.keyboard.createCursorKeys();
@@ -87,12 +105,33 @@ class ClassroomScene extends Phaser.Scene {
 
     createPlayer(x, y) {
         // プレイヤーキャラクター
-        if (this.currentGender === 'male') {
-            this.playerSprite = createMaleSprite(this, x, y, 0);
-        } else if (this.currentGender === 'female') {
-            this.playerSprite = createFemaleSprite(this, x, y, 0);
-        } else {
-            this.playerSprite = createCatSprite(this, x, y, 0);
+        switch (this.currentGender) {
+            case 'human':
+                this.playerSprite = createHumanSprite(this, x, y, 0);
+                break;
+            case 'cat':
+                this.playerSprite = createCatSprite(this, x, y, 0);
+                break;
+            case 'dog':
+                this.playerSprite = createDogSprite(this, x, y, 0);
+                break;
+            case 'rabbit':
+                this.playerSprite = createRabbitSprite(this, x, y, 0);
+                break;
+            case 'lion':
+                this.playerSprite = createLionSprite(this, x, y, 0);
+                break;
+            case 'elephant':
+                this.playerSprite = createElephantSprite(this, x, y, 0);
+                break;
+            case 'panda':
+                this.playerSprite = createPandaSprite(this, x, y, 0);
+                break;
+            case 'sparrow':
+                this.playerSprite = createSparrowSprite(this, x, y, 0);
+                break;
+            default:
+                this.playerSprite = createHumanSprite(this, x, y, 0);
         }
 
         // 当たり判定用の透明な矩形
@@ -163,6 +202,9 @@ class ClassroomScene extends Phaser.Scene {
             if (this.onPositionUpdate) {
                 this.onPositionUpdate(this.player.x, this.player.y);
             }
+
+            // 出口ドアの判定
+            this.checkExitDoorCollision();
         }
 
         // 画面外に出ないように
@@ -178,17 +220,61 @@ class ClassroomScene extends Phaser.Scene {
         }
     }
 
+    checkExitDoorCollision() {
+        const px = this.player.x;
+        const py = this.player.y;
+        const doorX = this.scale.width / 2;
+        const doorY = this.scale.height - 10;
+        const doorWidth = 60;
+        const doorHeight = 30;
+
+        // ドアの当たり判定
+        if (px >= doorX - doorWidth / 2 && px <= doorX + doorWidth / 2 &&
+            py >= doorY - doorHeight && py <= doorY) {
+            // お庭に戻る
+            if (window.game && window.game.switchToGarden) {
+                window.game.switchToGarden();
+            } else {
+                // グローバル関数を呼び出し
+                if (typeof switchToGarden === 'function') {
+                    switchToGarden();
+                }
+            }
+        }
+    }
+
     updatePlayerSprite() {
         if (this.playerSprite) {
             this.playerSprite.destroy();
         }
 
-        if (this.currentGender === 'male') {
-            this.playerSprite = createMaleSprite(this, this.player.x, this.player.y, this.walkFrame);
-        } else if (this.currentGender === 'female') {
-            this.playerSprite = createFemaleSprite(this, this.player.x, this.player.y, this.walkFrame);
-        } else {
-            this.playerSprite = createCatSprite(this, this.player.x, this.player.y, this.walkFrame);
+        switch (this.currentGender) {
+            case 'human':
+                this.playerSprite = createHumanSprite(this, this.player.x, this.player.y, this.walkFrame);
+                break;
+            case 'cat':
+                this.playerSprite = createCatSprite(this, this.player.x, this.player.y, this.walkFrame);
+                break;
+            case 'dog':
+                this.playerSprite = createDogSprite(this, this.player.x, this.player.y, this.walkFrame);
+                break;
+            case 'rabbit':
+                this.playerSprite = createRabbitSprite(this, this.player.x, this.player.y, this.walkFrame);
+                break;
+            case 'lion':
+                this.playerSprite = createLionSprite(this, this.player.x, this.player.y, this.walkFrame);
+                break;
+            case 'elephant':
+                this.playerSprite = createElephantSprite(this, this.player.x, this.player.y, this.walkFrame);
+                break;
+            case 'panda':
+                this.playerSprite = createPandaSprite(this, this.player.x, this.player.y, this.walkFrame);
+                break;
+            case 'sparrow':
+                this.playerSprite = createSparrowSprite(this, this.player.x, this.player.y, this.walkFrame);
+                break;
+            default:
+                this.playerSprite = createHumanSprite(this, this.player.x, this.player.y, this.walkFrame);
         }
     }
 
@@ -204,12 +290,33 @@ class ClassroomScene extends Phaser.Scene {
         users.forEach((user) => {
             if (user.id !== this.currentUserId && user.location === 'classroom' && user.x && user.y) {
                 let sprite;
-                if (user.gender === 'male') {
-                    sprite = createMaleSprite(this, user.x, user.y, 0);
-                } else if (user.gender === 'female') {
-                    sprite = createFemaleSprite(this, user.x, user.y, 0);
-                } else {
-                    sprite = createCatSprite(this, user.x, user.y, 0);
+                switch (user.gender) {
+                    case 'human':
+                        sprite = createHumanSprite(this, user.x, user.y, 0);
+                        break;
+                    case 'cat':
+                        sprite = createCatSprite(this, user.x, user.y, 0);
+                        break;
+                    case 'dog':
+                        sprite = createDogSprite(this, user.x, user.y, 0);
+                        break;
+                    case 'rabbit':
+                        sprite = createRabbitSprite(this, user.x, user.y, 0);
+                        break;
+                    case 'lion':
+                        sprite = createLionSprite(this, user.x, user.y, 0);
+                        break;
+                    case 'elephant':
+                        sprite = createElephantSprite(this, user.x, user.y, 0);
+                        break;
+                    case 'panda':
+                        sprite = createPandaSprite(this, user.x, user.y, 0);
+                        break;
+                    case 'sparrow':
+                        sprite = createSparrowSprite(this, user.x, user.y, 0);
+                        break;
+                    default:
+                        sprite = createHumanSprite(this, user.x, user.y, 0);
                 }
 
                 const bubble = createSpeechBubble(this, user.x, user.y - 40, user.characterName);

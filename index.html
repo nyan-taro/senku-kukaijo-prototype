@@ -23,14 +23,20 @@
                     <label>役割を選択</label>
                     <select id="role-select">
                         <option value="participant">一般参加者</option>
-                        <option value="judge">選者</option>
                         <option value="host">主催者</option>
                     </select>
                 </div>
 
                 <div id="room-name-group" class="form-group" style="display: none;">
-                    <label>教室名</label>
-                    <input type="text" id="room-name-input" placeholder="例: 春の句会">
+                    <label>教室名（27文字まで）</label>
+                    <input type="text" id="room-name-input" placeholder="例: 春の句会" maxlength="27">
+                </div>
+
+                <div id="theme-group" class="form-group" style="display: none;">
+                    <label>課題①（7文字まで、空欄可）</label>
+                    <input type="text" id="theme1-input" placeholder="例: 春" maxlength="7">
+                    <label style="margin-top: 10px;">課題②（7文字まで、空欄可）</label>
+                    <input type="text" id="theme2-input" placeholder="例: 花" maxlength="7">
                 </div>
 
                 <div class="form-group">
@@ -39,16 +45,21 @@
                 </div>
 
                 <div class="form-group">
-                    <label>ニックネーム</label>
-                    <input type="text" id="character-name-input" placeholder="ニックネームを入力" required>
+                    <label>ニックネーム（日本語6文字、ローマ字12文字まで）</label>
+                    <input type="text" id="character-name-input" placeholder="ニックネームを入力" required maxlength="12">
                 </div>
 
                 <div class="form-group">
                     <label>キャラクター</label>
                     <select id="gender-select" required>
-                        <option value="male">男性</option>
-                        <option value="female">女性</option>
-                        <option value="cat">その他（ねこ）</option>
+                        <option value="human">にんげん</option>
+                        <option value="cat">ねこ</option>
+                        <option value="dog">いぬ</option>
+                        <option value="rabbit">うさぎ</option>
+                        <option value="lion">らいおん</option>
+                        <option value="elephant">ぞう</option>
+                        <option value="panda">ぱんだ</option>
+                        <option value="sparrow">すずめ</option>
                     </select>
                 </div>
 
@@ -85,33 +96,52 @@
                 </form>
             </div>
 
-            <!-- 披講欄（主催者・選者のみ） -->
+            <!-- 披講欄（主催者のみ） -->
             <div id="hikikou-area" class="hikikou-area" style="display: none;">
                 <h3>披講</h3>
                 <div class="hikikou-input-container">
-                    <input type="text" id="hikikou-input" placeholder="披講する句を入力...">
+                    <input type="text" id="hikikou-input" placeholder="披講する川柳を入力...">
                     <button id="hikikou-btn" class="hikikou-button">披講ボタン</button>
                 </div>
             </div>
 
             <!-- 投句欄（一般のみ） -->
             <div id="haiku-area" class="haiku-area" style="display: none;">
-                <h3>投句</h3>
-                <form id="haiku-form" class="haiku-form">
-                    <textarea id="haiku-input" placeholder="俳句を入力..." rows="3"></textarea>
-                    <button type="submit">投句する</button>
-                </form>
+                <h3>投句（二句まで）</h3>
+                <div class="haiku-form">
+                    <div class="theme-selector">
+                        <button type="button" class="theme-btn active" data-theme="1">課題 <span id="theme1-display">①</span></button>
+                        <button type="button" class="theme-btn" data-theme="2">課題 <span id="theme2-display">②</span></button>
+                    </div>
+                    <div class="haiku-input-row">
+                        <input type="text" id="haiku-input-1" placeholder="川柳を入力..." maxlength="30">
+                        <button type="button" id="haiku-submit-1">投句する</button>
+                    </div>
+                    <div class="haiku-input-row">
+                        <input type="text" id="haiku-input-2" placeholder="川柳を入力..." maxlength="30">
+                        <button type="button" id="haiku-submit-2">投句する</button>
+                    </div>
+                </div>
             </div>
 
-            <!-- 作品一覧（主催者・選者） -->
+            <!-- 作品一覧（主催者のみ） -->
             <div id="haiku-list-area" class="haiku-list-area" style="display: none;">
-                <h3>投句作品一覧</h3>
-                <div id="haiku-list" class="haiku-list"></div>
+                <div class="haiku-list-header">
+                    <h3>投句作品一覧</h3>
+                    <div class="theme-tabs">
+                        <button class="theme-tab active" data-tab="1">課題 <span id="tab-theme1">①</span></button>
+                        <button class="theme-tab" data-tab="2">課題 <span id="tab-theme2">②</span></button>
+                    </div>
+                </div>
+                <div id="haiku-list-1" class="haiku-list" style="display: block;"></div>
+                <div id="haiku-list-2" class="haiku-list" style="display: none;"></div>
             </div>
 
             <!-- ボタンエリア -->
             <div id="button-area" class="button-area">
                 <button id="callout-btn" class="action-button" style="display: none;">呼名する</button>
+                <button id="download-log-btn" class="action-button" style="display: none;">ログをダウンロード</button>
+                <button id="download-haiku-btn" class="action-button" style="display: none;">投句一覧をダウンロード</button>
                 <button id="go-garden-btn" class="action-button">お庭にいく</button>
                 <button id="leave-btn" class="action-button">教室から出る</button>
                 <button id="end-session-btn" class="end-button" style="display: none;">句会を終了する</button>

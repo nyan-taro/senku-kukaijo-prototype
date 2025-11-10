@@ -33,14 +33,13 @@ class GardenScene extends Phaser.Scene {
         // 噴水（中央）
         const fountain = createFountain(this, this.scale.width / 2, this.scale.height / 2);
 
-        // 花壇（複数配置）
+        // 花壇（両端のみ配置）
         createFlowerBed(this, 150, this.scale.height - 80);
         createFlowerBed(this, this.scale.width - 150, this.scale.height - 80);
-        createFlowerBed(this, this.scale.width / 2, 80);
 
-        // 建物を3つ配置
+        // 建物を3つ配置（間隔を広げる）
         const buildingY = 200;
-        const buildingSpacing = this.scale.width / 4;
+        const buildingSpacing = this.scale.width / 3.5;
 
         for (let i = 0; i < 3; i++) {
             const x = buildingSpacing * (i + 1);
@@ -92,12 +91,33 @@ class GardenScene extends Phaser.Scene {
 
     createPlayer(x, y) {
         // プレイヤーキャラクター
-        if (this.currentGender === 'male') {
-            this.playerSprite = createMaleSprite(this, x, y, 0);
-        } else if (this.currentGender === 'female') {
-            this.playerSprite = createFemaleSprite(this, x, y, 0);
-        } else {
-            this.playerSprite = createCatSprite(this, x, y, 0);
+        switch (this.currentGender) {
+            case 'human':
+                this.playerSprite = createHumanSprite(this, x, y, 0);
+                break;
+            case 'cat':
+                this.playerSprite = createCatSprite(this, x, y, 0);
+                break;
+            case 'dog':
+                this.playerSprite = createDogSprite(this, x, y, 0);
+                break;
+            case 'rabbit':
+                this.playerSprite = createRabbitSprite(this, x, y, 0);
+                break;
+            case 'lion':
+                this.playerSprite = createLionSprite(this, x, y, 0);
+                break;
+            case 'elephant':
+                this.playerSprite = createElephantSprite(this, x, y, 0);
+                break;
+            case 'panda':
+                this.playerSprite = createPandaSprite(this, x, y, 0);
+                break;
+            case 'sparrow':
+                this.playerSprite = createSparrowSprite(this, x, y, 0);
+                break;
+            default:
+                this.playerSprite = createHumanSprite(this, x, y, 0);
         }
 
         // 当たり判定用の透明な矩形
@@ -195,12 +215,33 @@ class GardenScene extends Phaser.Scene {
             this.playerSprite.destroy();
         }
 
-        if (this.currentGender === 'male') {
-            this.playerSprite = createMaleSprite(this, this.player.x, this.player.y, this.walkFrame);
-        } else if (this.currentGender === 'female') {
-            this.playerSprite = createFemaleSprite(this, this.player.x, this.player.y, this.walkFrame);
-        } else {
-            this.playerSprite = createCatSprite(this, this.player.x, this.player.y, this.walkFrame);
+        switch (this.currentGender) {
+            case 'human':
+                this.playerSprite = createHumanSprite(this, this.player.x, this.player.y, this.walkFrame);
+                break;
+            case 'cat':
+                this.playerSprite = createCatSprite(this, this.player.x, this.player.y, this.walkFrame);
+                break;
+            case 'dog':
+                this.playerSprite = createDogSprite(this, this.player.x, this.player.y, this.walkFrame);
+                break;
+            case 'rabbit':
+                this.playerSprite = createRabbitSprite(this, this.player.x, this.player.y, this.walkFrame);
+                break;
+            case 'lion':
+                this.playerSprite = createLionSprite(this, this.player.x, this.player.y, this.walkFrame);
+                break;
+            case 'elephant':
+                this.playerSprite = createElephantSprite(this, this.player.x, this.player.y, this.walkFrame);
+                break;
+            case 'panda':
+                this.playerSprite = createPandaSprite(this, this.player.x, this.player.y, this.walkFrame);
+                break;
+            case 'sparrow':
+                this.playerSprite = createSparrowSprite(this, this.player.x, this.player.y, this.walkFrame);
+                break;
+            default:
+                this.playerSprite = createHumanSprite(this, this.player.x, this.player.y, this.walkFrame);
         }
     }
 
@@ -235,12 +276,33 @@ class GardenScene extends Phaser.Scene {
         users.forEach((user) => {
             if (user.id !== this.currentUserId && user.location === 'garden' && user.x && user.y) {
                 let sprite;
-                if (user.gender === 'male') {
-                    sprite = createMaleSprite(this, user.x, user.y, 0);
-                } else if (user.gender === 'female') {
-                    sprite = createFemaleSprite(this, user.x, user.y, 0);
-                } else {
-                    sprite = createCatSprite(this, user.x, user.y, 0);
+                switch (user.gender) {
+                    case 'human':
+                        sprite = createHumanSprite(this, user.x, user.y, 0);
+                        break;
+                    case 'cat':
+                        sprite = createCatSprite(this, user.x, user.y, 0);
+                        break;
+                    case 'dog':
+                        sprite = createDogSprite(this, user.x, user.y, 0);
+                        break;
+                    case 'rabbit':
+                        sprite = createRabbitSprite(this, user.x, user.y, 0);
+                        break;
+                    case 'lion':
+                        sprite = createLionSprite(this, user.x, user.y, 0);
+                        break;
+                    case 'elephant':
+                        sprite = createElephantSprite(this, user.x, user.y, 0);
+                        break;
+                    case 'panda':
+                        sprite = createPandaSprite(this, user.x, user.y, 0);
+                        break;
+                    case 'sparrow':
+                        sprite = createSparrowSprite(this, user.x, user.y, 0);
+                        break;
+                    default:
+                        sprite = createHumanSprite(this, user.x, user.y, 0);
                 }
 
                 const bubble = createSpeechBubble(this, user.x, user.y - 40, user.characterName);

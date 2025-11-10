@@ -4,6 +4,8 @@ let currentLocation = 'garden';
 let currentRoomIndex = 0;
 let game = null;
 let broadcastChannel = null;
+let currentTheme = 1; // 投句の選択課題 (1 or 2)
+let currentListTab = 1; // 作品一覧のタブ (1 or 2)
 
 // ローカルストレージキー
 const STORAGE_KEYS = {
@@ -53,9 +55,9 @@ function getRoomsData() {
     const data = loadFromLocalStorage(STORAGE_KEYS.ROOMS_DATA);
     if (!data) {
         return [
-            { name: '句会場1', hasHost: false, hostId: null, users: [], messages: [], haikus: [], currentHaikuDisplay: '' },
-            { name: '句会場2', hasHost: false, hostId: null, users: [], messages: [], haikus: [], currentHaikuDisplay: '' },
-            { name: '句会場3', hasHost: false, hostId: null, users: [], messages: [], haikus: [], currentHaikuDisplay: '' }
+            { name: '句会場1', theme1: '課題①', theme2: '課題②', hasHost: false, hostId: null, users: [], messages: [], haikus: [], currentHaikuDisplay: '', displayedHaikuIds: [] },
+            { name: '句会場2', theme1: '課題①', theme2: '課題②', hasHost: false, hostId: null, users: [], messages: [], haikus: [], currentHaikuDisplay: '', displayedHaikuIds: [] },
+            { name: '句会場3', theme1: '課題①', theme2: '課題②', hasHost: false, hostId: null, users: [], messages: [], haikus: [], currentHaikuDisplay: '', displayedHaikuIds: [] }
         ];
     }
     return data;
@@ -190,7 +192,20 @@ function enterRoom(roomIndex) {
             x: 300,
             y: 300
         });
+
+        // ログイン通知
+        const loginMessage = {
+            id: `msg_${Date.now()}_${Math.random()}`,
+            userId: 'system',
+            userName: '',
+            message: `${currentUser.characterName}さんがログインしました`,
+            timestamp: Date.now(),
+            type: 'login'
+        };
+        room.messages.push(loginMessage);
+
         saveRoomsData(rooms);
+        broadcastMessage({ type: 'chat_message', message: loginMessage, roomIndex: currentRoomIndex });
     }
 
     switchToClassroom();
@@ -265,14 +280,8 @@ function updateUI() {
         displayMessage(msg, currentRoomIndex);
     });
 
-    // 俳句一覧表示
-    const haikuList = document.getElementById('haiku-list');
-    if (haikuList) {
-        haikuList.innerHTML = '';
-        room.haikus.forEach(haiku => {
-            displayHaiku(haiku, currentRoomIndex);
-        });
-    }
+    // 川柳一覧表示
+    updateHaikuLists();
 }
 
 function displayMessage(message, roomIndex) {
@@ -282,16 +291,39 @@ function displayMessage(message, roomIndex) {
     const messageDiv = document.createElement('div');
     messageDiv.className = 'message';
 
-    if (message.type === 'announcement') {
-        messageDiv.classList.add('message-announcement');
-    } else if (message.type === 'callout') {
-        messageDiv.classList.add('message-callout');
+    // 自分のメッセージか他人のメッセージか判定
+    if (message.type === 'login') {
+        messageDiv.classList.add('message-login');
+        messageDiv.textContent = message.message;
+    } else if (message.userId === currentUser.id) {
+        messageDiv.classList.add('message-self');
+        if (message.type === 'announcement') {
+            messageDiv.classList.add('message-announcement');
+            messageDiv.innerHTML = `主催者: ${message.message}`;
+        } else if (message.type === 'callout') {
+            messageDiv.classList.add('message-callout');
+            messageDiv.textContent = message.message;
+        } else {
+            messageDiv.innerHTML = `
+                <span class="message-name">${message.userName}:</span>
+                <span>${message.message}</span>
+            `;
+        }
+    } else {
+        messageDiv.classList.add('message-other');
+        if (message.type === 'announcement') {
+            messageDiv.classList.add('message-announcement');
+            messageDiv.innerHTML = `主催者: ${message.message}`;
+        } else if (message.type === 'callout') {
+            messageDiv.classList.add('message-callout');
+            messageDiv.textContent = message.message;
+        } else {
+            messageDiv.innerHTML = `
+                <span class="message-name">${message.userName}:</span>
+                <span>${message.message}</span>
+            `;
+        }
     }
-
-    messageDiv.innerHTML = `
-        <span class="message-name">${message.userName}:</span>
-        <span>${message.message}</span>
-    `;
 
     messagesContainer.appendChild(messageDiv);
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
@@ -299,30 +331,54 @@ function displayMessage(message, roomIndex) {
 
 function displayHaiku(haiku, roomIndex) {
     if (roomIndex !== currentRoomIndex) return;
-
-    const haikuList = document.getElementById('haiku-list');
-    if (!haikuList) return;
-
-    const haikuDiv = document.createElement('div');
-    haikuDiv.className = 'haiku-item';
-    haikuDiv.innerHTML = `
-        <div class="haiku-content">${haiku.content}</div>
-        <div class="haiku-author">- ${haiku.userName}</div>
-        ${currentUser && (currentUser.role === 'host' || currentUser.role === 'judge') ?
-            `<button class="display-button" onclick="displayHaikuOnBlackboard('${haiku.content.replace(/'/g, "\\'")}')">黒板に表示</button>` :
-            ''}
-    `;
-    haikuList.appendChild(haikuDiv);
+    updateHaikuLists();
 }
 
-function displayHaikuOnBlackboard(content) {
+function updateHaikuLists() {
     const rooms = getRoomsData();
     const room = rooms[currentRoomIndex];
+
+    const haikuList1 = document.getElementById('haiku-list-1');
+    const haikuList2 = document.getElementById('haiku-list-2');
+
+    if (!haikuList1 || !haikuList2) return;
+
+    haikuList1.innerHTML = '';
+    haikuList2.innerHTML = '';
+
+    room.haikus.forEach(haiku => {
+        const targetList = haiku.theme === 1 ? haikuList1 : haikuList2;
+        const haikuDiv = document.createElement('div');
+        haikuDiv.className = 'haiku-item';
+
+        const isDisplayed = room.displayedHaikuIds.includes(haiku.id);
+
+        haikuDiv.innerHTML = `
+            <div class="haiku-content">${haiku.content}</div>
+            ${currentUser && currentUser.role === 'host' ?
+                `<button class="display-button ${isDisplayed ? 'disabled' : ''}"
+                    ${isDisplayed ? 'disabled' : ''}
+                    onclick="displayHaikuOnBlackboard('${haiku.id}', '${haiku.content.replace(/'/g, "\\'")}')">黒板に表示</button>` :
+                ''}
+        `;
+        targetList.appendChild(haikuDiv);
+    });
+}
+
+function displayHaikuOnBlackboard(haikuId, content) {
+    const rooms = getRoomsData();
+    const room = rooms[currentRoomIndex];
+
     room.currentHaikuDisplay = content;
+    if (!room.displayedHaikuIds.includes(haikuId)) {
+        room.displayedHaikuIds.push(haikuId);
+    }
+
     saveRoomsData(rooms);
     updateBlackboard(content);
+    updateHaikuLists(); // ボタンを無効化
 
-    // チャットにも表示
+    // チャットにも表示（主催者として）
     const message = {
         id: `msg_${Date.now()}_${Math.random()}`,
         userId: currentUser.id,
@@ -361,12 +417,23 @@ function loadRoomData(roomIndex) {
     messagesContainer.innerHTML = '';
     room.messages.forEach(msg => displayMessage(msg, roomIndex));
 
-    // 俳句をロード
-    const haikuList = document.getElementById('haiku-list');
-    if (haikuList) {
-        haikuList.innerHTML = '';
-        room.haikus.forEach(haiku => displayHaiku(haiku, roomIndex));
-    }
+    // 川柳をロード
+    updateHaikuLists();
+
+    // 課題を表示
+    updateThemeDisplay(room.theme1, room.theme2);
+}
+
+function updateThemeDisplay(theme1, theme2) {
+    const theme1Display = document.getElementById('theme1-display');
+    const theme2Display = document.getElementById('theme2-display');
+    const tabTheme1 = document.getElementById('tab-theme1');
+    const tabTheme2 = document.getElementById('tab-theme2');
+
+    if (theme1Display) theme1Display.textContent = theme1 || '①';
+    if (theme2Display) theme2Display.textContent = theme2 || '②';
+    if (tabTheme1) tabTheme1.textContent = theme1 || '①';
+    if (tabTheme2) tabTheme2.textContent = theme2 || '②';
 }
 
 function setupUIForRole(role) {
@@ -375,6 +442,8 @@ function setupUIForRole(role) {
     const haikuArea = document.getElementById('haiku-area');
     const haikuListArea = document.getElementById('haiku-list-area');
     const calloutBtn = document.getElementById('callout-btn');
+    const downloadLogBtn = document.getElementById('download-log-btn');
+    const downloadHaikuBtn = document.getElementById('download-haiku-btn');
     const endSessionBtn = document.getElementById('end-session-btn');
 
     if (role === 'participant') {
@@ -383,27 +452,74 @@ function setupUIForRole(role) {
         hikikouArea.style.display = 'none';
         haikuListArea.style.display = 'none';
         calloutBtn.style.display = 'block';
+        downloadLogBtn.style.display = 'none';
+        downloadHaikuBtn.style.display = 'none';
         endSessionBtn.style.display = 'none';
-    } else {
+    } else if (role === 'host') {
         chatArea.classList.add('host-judge');
         haikuArea.style.display = 'none';
         hikikouArea.style.display = 'block';
         haikuListArea.style.display = 'block';
         calloutBtn.style.display = 'none';
-
-        if (role === 'host') {
-            endSessionBtn.style.display = 'block';
-        }
+        downloadLogBtn.style.display = 'block';
+        downloadHaikuBtn.style.display = 'block';
+        endSessionBtn.style.display = 'block';
     }
 }
 
 function getRoleName(role) {
     switch (role) {
         case 'host': return '主催者';
-        case 'judge': return '選者';
         case 'participant': return '一般';
         default: return '';
     }
+}
+
+// CSV ダウンロード機能
+function downloadLog() {
+    const rooms = getRoomsData();
+    const room = rooms[currentRoomIndex];
+
+    let csvContent = '\uFEFF'; // BOM for UTF-8
+    csvContent += '時刻,送信者,種別,メッセージ\n';
+
+    room.messages.forEach(msg => {
+        const date = new Date(msg.timestamp);
+        const time = date.toLocaleTimeString('ja-JP');
+        const type = msg.type === 'announcement' ? '披講' : msg.type === 'callout' ? '呼名' : msg.type === 'login' ? 'ログイン' : 'チャット';
+        const sender = msg.userName || 'システム';
+        const message = msg.message.replace(/"/g, '""');
+        csvContent += `${time},"${sender}",${type},"${message}"\n`;
+    });
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `${room.name}_ログ_${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+}
+
+function downloadHaiku() {
+    const rooms = getRoomsData();
+    const room = rooms[currentRoomIndex];
+
+    let csvContent = '\uFEFF'; // BOM for UTF-8
+    csvContent += '課題,川柳,投稿者,時刻\n';
+
+    room.haikus.forEach(haiku => {
+        const date = new Date(haiku.timestamp);
+        const time = date.toLocaleString('ja-JP');
+        const theme = haiku.theme === 1 ? room.theme1 : room.theme2;
+        const content = haiku.content.replace(/"/g, '""');
+        const author = haiku.userName;
+        csvContent += `${theme},"${content}","${author}",${time}\n`;
+    });
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `${room.name}_投句一覧_${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
 }
 
 // ログイン処理
@@ -414,6 +530,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const roleSelect = document.getElementById('role-select');
     const genderSelect = document.getElementById('gender-select');
     const roomNameGroup = document.getElementById('room-name-group');
+    const themeGroup = document.getElementById('theme-group');
     const continueSection = document.getElementById('continue-section');
     const continueBtn = document.getElementById('continue-btn');
     const savedInfo = document.getElementById('saved-info');
@@ -429,12 +546,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
         continueBtn.addEventListener('click', () => {
             const roomNameInput = document.getElementById('room-name-input').value;
+            const theme1 = document.getElementById('theme1-input').value || '課題①';
+            const theme2 = document.getElementById('theme2-input').value || '課題②';
             loginWithData(
                 savedUserData.name,
                 savedUserData.characterName,
                 savedUserData.role,
-                savedUserData.gender || 'male',
-                savedUserData.role === 'host' ? roomNameInput : null
+                savedUserData.gender || 'human',
+                savedUserData.role === 'host' ? roomNameInput : null,
+                theme1,
+                theme2
             );
         });
     }
@@ -443,10 +564,32 @@ document.addEventListener('DOMContentLoaded', () => {
     roleSelect.addEventListener('change', () => {
         if (roleSelect.value === 'host') {
             roomNameGroup.style.display = 'block';
+            themeGroup.style.display = 'block';
         } else {
             roomNameGroup.style.display = 'none';
+            themeGroup.style.display = 'none';
         }
     });
+
+    // ニックネーム文字数検証
+    function validateNickname(nickname) {
+        // 日本語文字（ひらがな、カタカナ、漢字）を含むかチェック
+        const hasJapanese = /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(nickname);
+
+        if (hasJapanese) {
+            // 日本語が含まれる場合は6文字まで
+            if (nickname.length > 6) {
+                return { valid: false, message: 'ニックネームは日本語6文字までです。' };
+            }
+        } else {
+            // ローマ字のみの場合は12文字まで
+            if (nickname.length > 12) {
+                return { valid: false, message: 'ニックネームはローマ字12文字までです。' };
+            }
+        }
+
+        return { valid: true };
+    }
 
     // ログインフォーム送信
     loginForm.addEventListener('submit', (e) => {
@@ -456,13 +599,22 @@ document.addEventListener('DOMContentLoaded', () => {
         const role = roleSelect.value;
         const gender = genderSelect.value;
         const roomName = document.getElementById('room-name-input').value;
+        const theme1 = document.getElementById('theme1-input').value || '課題①';
+        const theme2 = document.getElementById('theme2-input').value || '課題②';
 
         if (!name || !characterName) return;
 
-        loginWithData(name, characterName, role, gender, role === 'host' ? roomName : null);
+        // ニックネーム検証
+        const nicknameValidation = validateNickname(characterName);
+        if (!nicknameValidation.valid) {
+            alert(nicknameValidation.message);
+            return;
+        }
+
+        loginWithData(name, characterName, role, gender, role === 'host' ? roomName : null, theme1, theme2);
     });
 
-    function loginWithData(name, characterName, role, gender, roomName) {
+    function loginWithData(name, characterName, role, gender, roomName, theme1, theme2) {
         // ユーザーデータ保存
         saveUserData(name, characterName, role, gender);
 
@@ -489,6 +641,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             rooms[roomIndex].name = roomName;
+            rooms[roomIndex].theme1 = theme1;
+            rooms[roomIndex].theme2 = theme2;
             rooms[roomIndex].hasHost = true;
             rooms[roomIndex].hostId = currentUser.id;
             rooms[roomIndex].users.push(currentUser);
@@ -536,26 +690,52 @@ document.addEventListener('DOMContentLoaded', () => {
             chatInput.value = '';
         });
 
-        // 俳句投稿
-        const haikuForm = document.getElementById('haiku-form');
-        if (haikuForm) {
-            haikuForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                const haikuInput = document.getElementById('haiku-input');
-                const haikuText = haikuInput.value.trim();
-                if (!haikuText) return;
-
-                const haiku = {
-                    id: `haiku_${Date.now()}_${Math.random()}`,
-                    userId: currentUser.id,
-                    userName: currentUser.characterName,
-                    content: haikuText,
-                    timestamp: Date.now()
-                };
-
-                addHaiku(haiku);
-                haikuInput.value = '';
+        // 課題選択ボタン
+        const themeBtns = document.querySelectorAll('.theme-btn');
+        themeBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                themeBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentTheme = parseInt(btn.dataset.theme);
             });
+        });
+
+        // 投句ボタン（2つ）
+        const submitBtn1 = document.getElementById('haiku-submit-1');
+        const submitBtn2 = document.getElementById('haiku-submit-2');
+        const haikuInput1 = document.getElementById('haiku-input-1');
+        const haikuInput2 = document.getElementById('haiku-input-2');
+
+        if (submitBtn1 && haikuInput1) {
+            submitBtn1.addEventListener('click', () => {
+                submitHaiku(haikuInput1, submitBtn1, 1);
+            });
+        }
+
+        if (submitBtn2 && haikuInput2) {
+            submitBtn2.addEventListener('click', () => {
+                submitHaiku(haikuInput2, submitBtn2, 2);
+            });
+        }
+
+        function submitHaiku(input, button, slot) {
+            const haikuText = input.value.trim();
+            if (!haikuText) return;
+
+            const haiku = {
+                id: `haiku_${Date.now()}_${Math.random()}`,
+                userId: currentUser.id,
+                userName: currentUser.characterName,
+                content: haikuText,
+                theme: currentTheme,
+                timestamp: Date.now()
+            };
+
+            addHaiku(haiku);
+
+            // 入力欄を無効化（テキストは残す）
+            input.disabled = true;
+            button.disabled = true;
         }
 
         // 披講ボタン
@@ -566,7 +746,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 const content = hikikouInput.value.trim();
                 if (!content) return;
 
-                displayHaikuOnBlackboard(content);
+                // 一時的なIDを生成（披講は黒板のみ表示で、作品一覧には追加しない）
+                const tempId = `hikikou_${Date.now()}_${Math.random()}`;
+                displayHaikuOnBlackboard(tempId, content);
                 hikikouInput.value = '';
             });
         }
@@ -585,6 +767,33 @@ document.addEventListener('DOMContentLoaded', () => {
                 };
                 addMessage(message);
             });
+        }
+
+        // タブ切り替え（作品一覧）
+        const tabBtns = document.querySelectorAll('.theme-tab');
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tabNum = parseInt(btn.dataset.tab);
+                tabBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                document.getElementById('haiku-list-1').style.display = tabNum === 1 ? 'block' : 'none';
+                document.getElementById('haiku-list-2').style.display = tabNum === 2 ? 'block' : 'none';
+
+                currentListTab = tabNum;
+            });
+        });
+
+        // ログダウンロードボタン
+        const downloadLogBtn = document.getElementById('download-log-btn');
+        if (downloadLogBtn) {
+            downloadLogBtn.addEventListener('click', downloadLog);
+        }
+
+        // 投句一覧ダウンロードボタン
+        const downloadHaikuBtn = document.getElementById('download-haiku-btn');
+        if (downloadHaikuBtn) {
+            downloadHaikuBtn.addEventListener('click', downloadHaiku);
         }
 
         // お庭に行くボタン
