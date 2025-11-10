@@ -4,8 +4,13 @@ let currentLocation = 'garden';
 let currentRoomIndex = 0;
 let game = null;
 let broadcastChannel = null;
-let currentTheme = 1; // 投句の選択課題 (1 or 2)
+let currentHaikuTab = 1; // 投句欄のタブ (1 or 2)
 let currentListTab = 1; // 作品一覧のタブ (1 or 2)
+let submittedHaikus = { 1: [false, false], 2: [false, false] }; // 課題ごとの投句状態
+
+// ページタイプ判定
+const IS_HOST_PAGE = window.IS_HOST_PAGE || false;
+const REQUIRED_PASSWORD = window.REQUIRED_PASSWORD || '';
 
 // ローカルストレージキー
 const STORAGE_KEYS = {
@@ -86,7 +91,10 @@ function setupBroadcastChannel() {
                 updateGameScene();
                 break;
             case 'chat_message':
-                displayMessage(data.message, data.roomIndex);
+                // 自分が送信したメッセージは既に表示済みなのでスキップ
+                if (data.message.userId !== currentUser.id) {
+                    displayMessage(data.message, data.roomIndex);
+                }
                 break;
             case 'haiku_submitted':
                 displayHaiku(data.haiku, data.roomIndex);
@@ -291,38 +299,30 @@ function displayMessage(message, roomIndex) {
     const messageDiv = document.createElement('div');
     messageDiv.className = 'message';
 
-    // 自分のメッセージか他人のメッセージか判定
+    // 披講・呼名・ログインは全幅表示
     if (message.type === 'login') {
-        messageDiv.classList.add('message-login');
+        messageDiv.classList.add('message-login', 'message-fullwidth');
+        messageDiv.textContent = message.message;
+    } else if (message.type === 'announcement') {
+        messageDiv.classList.add('message-announcement', 'message-fullwidth');
+        messageDiv.innerHTML = `主催者: ${message.message}`;
+    } else if (message.type === 'callout') {
+        messageDiv.classList.add('message-callout', 'message-fullwidth');
         messageDiv.textContent = message.message;
     } else if (message.userId === currentUser.id) {
+        // 通常のチャット：自分のメッセージは左寄せ
         messageDiv.classList.add('message-self');
-        if (message.type === 'announcement') {
-            messageDiv.classList.add('message-announcement');
-            messageDiv.innerHTML = `主催者: ${message.message}`;
-        } else if (message.type === 'callout') {
-            messageDiv.classList.add('message-callout');
-            messageDiv.textContent = message.message;
-        } else {
-            messageDiv.innerHTML = `
-                <span class="message-name">${message.userName}:</span>
-                <span>${message.message}</span>
-            `;
-        }
+        messageDiv.innerHTML = `
+            <span class="message-name">${message.userName}:</span>
+            <span>${message.message}</span>
+        `;
     } else {
+        // 通常のチャット：他人のメッセージは右寄せ
         messageDiv.classList.add('message-other');
-        if (message.type === 'announcement') {
-            messageDiv.classList.add('message-announcement');
-            messageDiv.innerHTML = `主催者: ${message.message}`;
-        } else if (message.type === 'callout') {
-            messageDiv.classList.add('message-callout');
-            messageDiv.textContent = message.message;
-        } else {
-            messageDiv.innerHTML = `
-                <span class="message-name">${message.userName}:</span>
-                <span>${message.message}</span>
-            `;
-        }
+        messageDiv.innerHTML = `
+            <span class="message-name">${message.userName}:</span>
+            <span>${message.message}</span>
+        `;
     }
 
     messagesContainer.appendChild(messageDiv);
@@ -378,7 +378,7 @@ function displayHaikuOnBlackboard(haikuId, content) {
     updateBlackboard(content);
     updateHaikuLists(); // ボタンを無効化
 
-    // チャットにも表示（主催者として）
+    // チャットにも表示（主催者として）- 自分だけに表示
     const message = {
         id: `msg_${Date.now()}_${Math.random()}`,
         userId: currentUser.id,
@@ -387,7 +387,12 @@ function displayHaikuOnBlackboard(haikuId, content) {
         timestamp: Date.now(),
         type: 'announcement'
     };
-    addMessage(message);
+    room.messages.push(message);
+    saveRoomsData(rooms);
+    displayMessage(message, currentRoomIndex);
+
+    // 他のユーザーに通知
+    broadcastMessage({ type: 'chat_message', message, roomIndex: currentRoomIndex });
 }
 
 function addMessage(message) {
@@ -395,8 +400,12 @@ function addMessage(message) {
     const room = rooms[currentRoomIndex];
     room.messages.push(message);
     saveRoomsData(rooms);
-    broadcastMessage({ type: 'chat_message', message, roomIndex: currentRoomIndex });
+
+    // 自分の画面に表示
     displayMessage(message, currentRoomIndex);
+
+    // 他のユーザーに通知
+    broadcastMessage({ type: 'chat_message', message, roomIndex: currentRoomIndex });
 }
 
 function addHaiku(haiku) {
@@ -425,15 +434,15 @@ function loadRoomData(roomIndex) {
 }
 
 function updateThemeDisplay(theme1, theme2) {
-    const theme1Display = document.getElementById('theme1-display');
-    const theme2Display = document.getElementById('theme2-display');
-    const tabTheme1 = document.getElementById('tab-theme1');
-    const tabTheme2 = document.getElementById('tab-theme2');
+    const theme1Displays = document.querySelectorAll('#theme1-display, #tab-theme1, #haiku-tab-theme1');
+    const theme2Displays = document.querySelectorAll('#theme2-display, #tab-theme2, #haiku-tab-theme2');
 
-    if (theme1Display) theme1Display.textContent = theme1 || '①';
-    if (theme2Display) theme2Display.textContent = theme2 || '②';
-    if (tabTheme1) tabTheme1.textContent = theme1 || '①';
-    if (tabTheme2) tabTheme2.textContent = theme2 || '②';
+    theme1Displays.forEach(el => {
+        if (el) el.textContent = theme1 || '①';
+    });
+    theme2Displays.forEach(el => {
+        if (el) el.textContent = theme2 || '②';
+    });
 }
 
 function setupUIForRole(role) {
@@ -527,16 +536,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const loginScreen = document.getElementById('login-screen');
     const mainScreen = document.getElementById('main-screen');
     const loginForm = document.getElementById('login-form');
-    const roleSelect = document.getElementById('role-select');
-    const genderSelect = document.getElementById('gender-select');
-    const roomNameGroup = document.getElementById('room-name-group');
-    const themeGroup = document.getElementById('theme-group');
     const continueSection = document.getElementById('continue-section');
     const continueBtn = document.getElementById('continue-btn');
     const savedInfo = document.getElementById('saved-info');
 
     // BroadcastChannel設定
     setupBroadcastChannel();
+
+    // 主催者ページの場合の処理
+    const passwordInput = document.getElementById('password-input');
+    const roleSelect = document.getElementById('role-select');
+    const genderSelect = document.getElementById('gender-select');
 
     // 前回のつづきボタン
     const savedUserData = loadUserData();
@@ -545,31 +555,37 @@ document.addEventListener('DOMContentLoaded', () => {
         savedInfo.textContent = `(${savedUserData.name} / ${savedUserData.characterName} / ${getRoleName(savedUserData.role)})`;
 
         continueBtn.addEventListener('click', () => {
-            const roomNameInput = document.getElementById('room-name-input').value;
-            const theme1 = document.getElementById('theme1-input').value || '課題①';
-            const theme2 = document.getElementById('theme2-input').value || '課題②';
-            loginWithData(
-                savedUserData.name,
-                savedUserData.characterName,
-                savedUserData.role,
-                savedUserData.gender || 'human',
-                savedUserData.role === 'host' ? roomNameInput : null,
-                theme1,
-                theme2
-            );
+            if (IS_HOST_PAGE) {
+                const password = document.getElementById('password-input').value;
+                if (password !== REQUIRED_PASSWORD) {
+                    alert('パスワードが正しくありません。');
+                    return;
+                }
+                const roomName = document.getElementById('room-name-input').value;
+                const theme1 = document.getElementById('theme1-input').value || '課題①';
+                const theme2 = document.getElementById('theme2-input').value || '課題②';
+                loginWithData(
+                    savedUserData.name,
+                    savedUserData.characterName,
+                    'host',
+                    savedUserData.gender || 'human',
+                    roomName,
+                    theme1,
+                    theme2
+                );
+            } else {
+                loginWithData(
+                    savedUserData.name,
+                    savedUserData.characterName,
+                    'participant',
+                    savedUserData.gender || 'human',
+                    null,
+                    null,
+                    null
+                );
+            }
         });
     }
-
-    // 役割選択で教室名入力欄の表示切替
-    roleSelect.addEventListener('change', () => {
-        if (roleSelect.value === 'host') {
-            roomNameGroup.style.display = 'block';
-            themeGroup.style.display = 'block';
-        } else {
-            roomNameGroup.style.display = 'none';
-            themeGroup.style.display = 'none';
-        }
-    });
 
     // ニックネーム文字数検証
     function validateNickname(nickname) {
@@ -596,11 +612,7 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         const name = document.getElementById('name-input').value;
         const characterName = document.getElementById('character-name-input').value;
-        const role = roleSelect.value;
         const gender = genderSelect.value;
-        const roomName = document.getElementById('room-name-input').value;
-        const theme1 = document.getElementById('theme1-input').value || '課題①';
-        const theme2 = document.getElementById('theme2-input').value || '課題②';
 
         if (!name || !characterName) return;
 
@@ -611,7 +623,28 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        loginWithData(name, characterName, role, gender, role === 'host' ? roomName : null, theme1, theme2);
+        if (IS_HOST_PAGE) {
+            // 主催者ページの処理
+            const password = passwordInput.value;
+            if (password !== REQUIRED_PASSWORD) {
+                alert('パスワードが正しくありません。');
+                return;
+            }
+
+            const roomName = document.getElementById('room-name-input').value;
+            const theme1 = document.getElementById('theme1-input').value || '課題①';
+            const theme2 = document.getElementById('theme2-input').value || '課題②';
+
+            if (!roomName) {
+                alert('教室名を入力してください。');
+                return;
+            }
+
+            loginWithData(name, characterName, 'host', gender, roomName, theme1, theme2);
+        } else {
+            // 一般参加ページの処理
+            loginWithData(name, characterName, 'participant', gender, null, null, null);
+        }
     });
 
     function loginWithData(name, characterName, role, gender, roomName, theme1, theme2) {
@@ -690,35 +723,60 @@ document.addEventListener('DOMContentLoaded', () => {
             chatInput.value = '';
         });
 
-        // 課題選択ボタン
-        const themeBtns = document.querySelectorAll('.theme-btn');
-        themeBtns.forEach(btn => {
+        // 投句欄のタブ切り替え
+        const haikuTabBtns = document.querySelectorAll('.haiku-tab-btn');
+        haikuTabBtns.forEach(btn => {
             btn.addEventListener('click', () => {
-                themeBtns.forEach(b => b.classList.remove('active'));
+                const tabNum = parseInt(btn.dataset.tab);
+                haikuTabBtns.forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
-                currentTheme = parseInt(btn.dataset.theme);
+
+                document.getElementById('haiku-inputs-1').style.display = tabNum === 1 ? 'block' : 'none';
+                document.getElementById('haiku-inputs-2').style.display = tabNum === 2 ? 'block' : 'none';
+
+                currentHaikuTab = tabNum;
             });
         });
 
-        // 投句ボタン（2つ）
-        const submitBtn1 = document.getElementById('haiku-submit-1');
-        const submitBtn2 = document.getElementById('haiku-submit-2');
-        const haikuInput1 = document.getElementById('haiku-input-1');
-        const haikuInput2 = document.getElementById('haiku-input-2');
+        // 投句ボタン（4つ）
+        const submitBtn11 = document.getElementById('haiku-submit-1-1');
+        const submitBtn12 = document.getElementById('haiku-submit-1-2');
+        const submitBtn21 = document.getElementById('haiku-submit-2-1');
+        const submitBtn22 = document.getElementById('haiku-submit-2-2');
+        const haikuInput11 = document.getElementById('haiku-input-1-1');
+        const haikuInput12 = document.getElementById('haiku-input-1-2');
+        const haikuInput21 = document.getElementById('haiku-input-2-1');
+        const haikuInput22 = document.getElementById('haiku-input-2-2');
 
-        if (submitBtn1 && haikuInput1) {
-            submitBtn1.addEventListener('click', () => {
-                submitHaiku(haikuInput1, submitBtn1, 1);
+        if (submitBtn11 && haikuInput11) {
+            submitBtn11.addEventListener('click', () => {
+                submitHaiku(haikuInput11, submitBtn11, 1);
+                submittedHaikus[1][0] = true;
             });
         }
 
-        if (submitBtn2 && haikuInput2) {
-            submitBtn2.addEventListener('click', () => {
-                submitHaiku(haikuInput2, submitBtn2, 2);
+        if (submitBtn12 && haikuInput12) {
+            submitBtn12.addEventListener('click', () => {
+                submitHaiku(haikuInput12, submitBtn12, 1);
+                submittedHaikus[1][1] = true;
             });
         }
 
-        function submitHaiku(input, button, slot) {
+        if (submitBtn21 && haikuInput21) {
+            submitBtn21.addEventListener('click', () => {
+                submitHaiku(haikuInput21, submitBtn21, 2);
+                submittedHaikus[2][0] = true;
+            });
+        }
+
+        if (submitBtn22 && haikuInput22) {
+            submitBtn22.addEventListener('click', () => {
+                submitHaiku(haikuInput22, submitBtn22, 2);
+                submittedHaikus[2][1] = true;
+            });
+        }
+
+        function submitHaiku(input, button, theme) {
             const haikuText = input.value.trim();
             if (!haikuText) return;
 
@@ -727,7 +785,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 userId: currentUser.id,
                 userName: currentUser.characterName,
                 content: haikuText,
-                theme: currentTheme,
+                theme: theme,
                 timestamp: Date.now()
             };
 
@@ -844,3 +902,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // グローバル関数としてエクスポート
 window.displayHaikuOnBlackboard = displayHaikuOnBlackboard;
+window.switchToGarden = switchToGarden;

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>川柳句会場アプリ</title>
+    <title>川柳句会場アプリ - 主催者</title>
     <link rel="stylesheet" href="css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
 </head>
@@ -11,7 +11,7 @@
     <!-- ログイン画面 -->
     <div id="login-screen" class="screen">
         <div class="login-card">
-            <h1>川柳句会場へようこそ</h1>
+            <h1>川柳句会場へようこそ（主催者）</h1>
 
             <div id="continue-section" style="display: none;">
                 <button id="continue-btn" class="continue-button">前回のつづき</button>
@@ -19,6 +19,24 @@
             </div>
 
             <form id="login-form">
+                <div class="form-group">
+                    <label>パスワード</label>
+                    <input type="password" id="password-input" placeholder="パスワードを入力" required>
+                </div>
+
+                <div class="form-group">
+                    <label>教室名（27文字まで）</label>
+                    <input type="text" id="room-name-input" placeholder="例: 春の句会" maxlength="27" required>
+                </div>
+
+                <div class="form-group">
+                    <label>課題①（7文字まで、空欄可）</label>
+                    <input type="text" id="theme1-input" placeholder="例: 春" maxlength="7">
+                    <br>
+                    <label style="margin-top: 10px;">課題②（7文字まで、空欄可）</label>
+                    <input type="text" id="theme2-input" placeholder="例: 花" maxlength="7">
+                </div>
+
                 <div class="form-group">
                     <label>お名前</label>
                     <input type="text" id="name-input" placeholder="本名を入力" required>
@@ -129,6 +147,11 @@
         </div>
     </div>
 
+    <script>
+        // 主催者用の設定
+        window.IS_HOST_PAGE = true;
+        window.REQUIRED_PASSWORD = '575';
+    </script>
     <script src="js/sprites.js"></script>
     <script src="js/scenes/classroom.js"></script>
     <script src="js/scenes/garden.js"></script>
