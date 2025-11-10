@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>俳句句会アプリ</title>
+    <title>川柳句会場アプリ</title>
     <link rel="stylesheet" href="css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
 </head>
@@ -11,7 +11,7 @@
     <!-- ログイン画面 -->
     <div id="login-screen" class="screen">
         <div class="login-card">
-            <h1>俳句句会へようこそ</h1>
+            <h1>川柳句会場へようこそ</h1>
 
             <div id="continue-section" style="display: none;">
                 <button id="continue-btn" class="continue-button">前回のつづき</button>
@@ -39,8 +39,17 @@
                 </div>
 
                 <div class="form-group">
-                    <label>キャラクター名</label>
+                    <label>ニックネーム</label>
                     <input type="text" id="character-name-input" placeholder="ニックネームを入力" required>
+                </div>
+
+                <div class="form-group">
+                    <label>キャラクター</label>
+                    <select id="gender-select" required>
+                        <option value="male">男性</option>
+                        <option value="female">女性</option>
+                        <option value="cat">その他（ねこ）</option>
+                    </select>
                 </div>
 
                 <button type="submit" class="submit-button">入室する</button>
@@ -110,6 +119,7 @@
         </div>
     </div>
 
+    <script src="js/sprites.js"></script>
     <script src="js/scenes/classroom.js"></script>
     <script src="js/scenes/garden.js"></script>
     <script src="js/app.js"></script>

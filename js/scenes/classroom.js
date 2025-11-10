@@ -2,18 +2,26 @@ class ClassroomScene extends Phaser.Scene {
     constructor() {
         super({ key: 'ClassroomScene' });
         this.player = null;
+        this.playerSprite = null;
+        this.playerBubble = null;
         this.otherPlayers = new Map();
         this.cursors = null;
         this.currentUserId = null;
+        this.currentGender = null;
+        this.currentNickname = null;
         this.onPositionUpdate = null;
         this.blackboard = null;
         this.blackboardText = null;
         this.desks = [];
         this.podium = null;
+        this.walkFrame = 0;
+        this.walkTimer = 0;
     }
 
     init(data) {
         this.currentUserId = data.userId;
+        this.currentGender = data.gender || 'male';
+        this.currentNickname = data.nickname || 'Player';
         this.onPositionUpdate = data.onPositionUpdate;
     }
 
@@ -34,25 +42,17 @@ class ClassroomScene extends Phaser.Scene {
             80,
             '',
             {
-                fontSize: '24px',
+                fontSize: '20px',
                 color: '#ffffff',
                 align: 'center',
                 wordWrap: { width: 440 }
             }
         ).setOrigin(0.5);
 
-        // 教壇（サイズ4倍）
-        this.podium = this.add.rectangle(
-            this.scale.width / 2,
-            180,
-            160,
-            80,
-            0x8b4513
-        );
+        // 教壇（ドット絵）
+        this.podium = createPodium(this, this.scale.width / 2, 180);
 
-        // 机を配置（サイズ4倍）
-        const deskWidth = 80;
-        const deskHeight = 60;
+        // 机を配置（ドット絵）
         const rows = 3;
         const cols = 4;
         const startX = 100;
@@ -62,25 +62,17 @@ class ClassroomScene extends Phaser.Scene {
 
         for (let row = 0; row < rows; row++) {
             for (let col = 0; col < cols; col++) {
-                const desk = this.add.rectangle(
+                const desk = createDesk(
+                    this,
                     startX + col * gapX,
-                    startY + row * gapY,
-                    deskWidth,
-                    deskHeight,
-                    0x654321
+                    startY + row * gapY
                 );
                 this.desks.push(desk);
             }
         }
 
-        // プレイヤー（サイズ4倍）
-        this.player = this.add.rectangle(
-            this.scale.width / 2,
-            this.scale.height - 100,
-            64,
-            64,
-            0x4CAF50
-        );
+        // プレイヤー作成（ドット絵）
+        this.createPlayer(this.scale.width / 2, this.scale.height - 100);
 
         // キーボード入力
         this.cursors = this.input.keyboard.createCursorKeys();
@@ -88,23 +80,56 @@ class ClassroomScene extends Phaser.Scene {
         // クリック/タップで移動
         this.input.on('pointerdown', (pointer) => {
             if (this.player) {
-                this.tweens.add({
-                    targets: this.player,
-                    x: pointer.x,
-                    y: pointer.y,
-                    duration: 500,
-                    ease: 'Power2',
-                    onUpdate: () => {
-                        if (this.player && this.onPositionUpdate) {
-                            this.onPositionUpdate(this.player.x, this.player.y);
-                        }
-                    }
-                });
+                this.movePlayerTo(pointer.x, pointer.y);
             }
         });
     }
 
-    update() {
+    createPlayer(x, y) {
+        // プレイヤーキャラクター
+        if (this.currentGender === 'male') {
+            this.playerSprite = createMaleSprite(this, x, y, 0);
+        } else if (this.currentGender === 'female') {
+            this.playerSprite = createFemaleSprite(this, x, y, 0);
+        } else {
+            this.playerSprite = createCatSprite(this, x, y, 0);
+        }
+
+        // 当たり判定用の透明な矩形
+        this.player = this.add.rectangle(x, y, 64, 64, 0x000000, 0);
+
+        // ニックネーム吹き出し
+        this.playerBubble = createSpeechBubble(this, x, y - 40, this.currentNickname);
+    }
+
+    movePlayerTo(targetX, targetY) {
+        const duration = Phaser.Math.Distance.Between(
+            this.player.x, this.player.y,
+            targetX, targetY
+        ) * 2;
+
+        this.tweens.add({
+            targets: this.player,
+            x: targetX,
+            y: targetY,
+            duration: duration,
+            ease: 'Linear',
+            onUpdate: () => {
+                if (this.player && this.onPositionUpdate) {
+                    this.onPositionUpdate(this.player.x, this.player.y);
+                }
+                // スプライトと吹き出しも追従
+                if (this.playerSprite) {
+                    this.playerSprite.setPosition(this.player.x - 32, this.player.y - 32);
+                }
+                if (this.playerBubble) {
+                    this.playerBubble.setPosition(this.player.x, this.player.y - 40);
+                }
+            }
+        });
+    }
+
+    update(time, delta) {
         if (!this.player || !this.cursors) return;
 
         const speed = 5;
@@ -126,37 +151,72 @@ class ClassroomScene extends Phaser.Scene {
             moved = true;
         }
 
-        if (moved && this.onPositionUpdate) {
-            this.onPositionUpdate(this.player.x, this.player.y);
+        if (moved) {
+            // 歩行アニメーション
+            this.walkTimer += delta;
+            if (this.walkTimer > 200) {
+                this.walkTimer = 0;
+                this.walkFrame = (this.walkFrame + 1) % 2;
+                this.updatePlayerSprite();
+            }
+
+            if (this.onPositionUpdate) {
+                this.onPositionUpdate(this.player.x, this.player.y);
+            }
         }
 
         // 画面外に出ないように
         this.player.x = Phaser.Math.Clamp(this.player.x, 32, this.scale.width - 32);
         this.player.y = Phaser.Math.Clamp(this.player.y, 32, this.scale.height - 32);
+
+        // スプライトと吹き出しを追従
+        if (this.playerSprite) {
+            this.playerSprite.setPosition(this.player.x - 32, this.player.y - 32);
+        }
+        if (this.playerBubble) {
+            this.playerBubble.setPosition(this.player.x, this.player.y - 40);
+        }
+    }
+
+    updatePlayerSprite() {
+        if (this.playerSprite) {
+            this.playerSprite.destroy();
+        }
+
+        if (this.currentGender === 'male') {
+            this.playerSprite = createMaleSprite(this, this.player.x, this.player.y, this.walkFrame);
+        } else if (this.currentGender === 'female') {
+            this.playerSprite = createFemaleSprite(this, this.player.x, this.player.y, this.walkFrame);
+        } else {
+            this.playerSprite = createCatSprite(this, this.player.x, this.player.y, this.walkFrame);
+        }
     }
 
     updateOtherPlayers(users) {
         // 既存のプレイヤーをクリア
         this.otherPlayers.forEach((playerData) => {
             if (playerData.sprite) playerData.sprite.destroy();
-            if (playerData.nameText) playerData.nameText.destroy();
+            if (playerData.bubble) playerData.bubble.destroy();
         });
         this.otherPlayers.clear();
 
         // 他のプレイヤーを表示
         users.forEach((user) => {
             if (user.id !== this.currentUserId && user.location === 'classroom' && user.x && user.y) {
-                const otherPlayer = this.add.rectangle(user.x, user.y, 64, 64, 0xFF5722);
-                const nameText = this.add.text(user.x, user.y - 40, user.characterName, {
-                    fontSize: '12px',
-                    color: '#000000',
-                    backgroundColor: '#ffffff',
-                    padding: { x: 4, y: 2 }
-                }).setOrigin(0.5);
+                let sprite;
+                if (user.gender === 'male') {
+                    sprite = createMaleSprite(this, user.x, user.y, 0);
+                } else if (user.gender === 'female') {
+                    sprite = createFemaleSprite(this, user.x, user.y, 0);
+                } else {
+                    sprite = createCatSprite(this, user.x, user.y, 0);
+                }
+
+                const bubble = createSpeechBubble(this, user.x, user.y - 40, user.characterName);
 
                 this.otherPlayers.set(user.id, {
-                    sprite: otherPlayer,
-                    nameText: nameText
+                    sprite: sprite,
+                    bubble: bubble
                 });
             }
         });

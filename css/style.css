@@ -470,11 +470,11 @@ body {
 
     /* 役割別の高さ調整 */
     .chat-area.participant {
-        height: 70%;
+        height: 60%;
     }
 
     .chat-area.host-judge {
-        height: 40%;
+        height: 35%;
     }
 
     .hikikou-area {
@@ -486,11 +486,17 @@ body {
     }
 
     .haiku-list-area {
-        height: 40%;
+        height: 35%;
     }
 
     .button-area {
         height: 10%;
+    }
+
+    /* ゲームコンテナを100%に */
+    #game-container {
+        width: 100% !important;
+        height: calc(100% - 50px) !important;
     }
 }
 

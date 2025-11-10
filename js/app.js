@@ -1,17 +1,14 @@
 // グローバル変数
 let currentUser = null;
 let currentLocation = 'garden';
+let currentRoomIndex = 0;
 let game = null;
 let broadcastChannel = null;
 
 // ローカルストレージキー
 const STORAGE_KEYS = {
     USER_DATA: 'senku_kukaijo_user_data',
-    SESSION_DATA: 'senku_kukaijo_session_data',
-    MESSAGES: 'senku_kukaijo_messages',
-    HAIKUS: 'senku_kukaijo_haikus',
-    ROOM_NAME: 'senku_kukaijo_room_name',
-    CURRENT_HAIKU_DISPLAY: 'senku_kukaijo_current_haiku_display'
+    ROOMS_DATA: 'senku_kukaijo_rooms_data'
 };
 
 // ユーティリティ関数
@@ -29,11 +26,12 @@ function loadFromLocalStorage(key) {
 }
 
 // ユーザーデータの保存・読み込み
-function saveUserData(name, characterName, role) {
+function saveUserData(name, characterName, role, gender) {
     const userData = {
         name,
         characterName,
         role,
+        gender,
         timestamp: Date.now()
     };
     saveToLocalStorage(STORAGE_KEYS.USER_DATA, userData);
@@ -50,68 +48,236 @@ function loadUserData() {
     return null;
 }
 
-// セッションデータ管理
-function getSessionData() {
-    return loadFromLocalStorage(STORAGE_KEYS.SESSION_DATA) || {
-        users: [],
-        roomName: '俳句句会'
+// 句会場データ管理（3つまで）
+function getRoomsData() {
+    const data = loadFromLocalStorage(STORAGE_KEYS.ROOMS_DATA);
+    if (!data) {
+        return [
+            { name: '句会場1', hasHost: false, hostId: null, users: [], messages: [], haikus: [], currentHaikuDisplay: '' },
+            { name: '句会場2', hasHost: false, hostId: null, users: [], messages: [], haikus: [], currentHaikuDisplay: '' },
+            { name: '句会場3', hasHost: false, hostId: null, users: [], messages: [], haikus: [], currentHaikuDisplay: '' }
+        ];
+    }
+    return data;
+}
+
+function saveRoomsData(rooms) {
+    saveToLocalStorage(STORAGE_KEYS.ROOMS_DATA, rooms);
+    broadcastMessage({ type: 'rooms_update', rooms });
+}
+
+function getCurrentRoom() {
+    const rooms = getRoomsData();
+    return rooms[currentRoomIndex];
+}
+
+// BroadcastChannel設定
+function setupBroadcastChannel() {
+    broadcastChannel = new BroadcastChannel('senku_kukaijo_channel');
+
+    broadcastChannel.onmessage = (event) => {
+        const data = event.data;
+
+        switch (data.type) {
+            case 'rooms_update':
+                updateUI();
+                updateGameScene();
+                break;
+            case 'chat_message':
+                displayMessage(data.message, data.roomIndex);
+                break;
+            case 'haiku_submitted':
+                displayHaiku(data.haiku, data.roomIndex);
+                break;
+        }
     };
 }
 
-function updateSessionData(updates) {
-    const sessionData = getSessionData();
-    const updatedData = { ...sessionData, ...updates };
-    saveToLocalStorage(STORAGE_KEYS.SESSION_DATA, updatedData);
-    return updatedData;
+function broadcastMessage(data) {
+    if (broadcastChannel) {
+        broadcastChannel.postMessage(data);
+    }
 }
 
-function addUser(user) {
-    const sessionData = getSessionData();
-    const existingUserIndex = sessionData.users.findIndex(u => u.id === user.id);
+// Phaser.jsゲーム初期化
+function initGame() {
+    const gameContainer = document.getElementById('game-container');
+    const width = Math.min(gameContainer.clientWidth, 600);
+    const height = Math.min(gameContainer.clientHeight, 600);
 
-    if (existingUserIndex !== -1) {
-        sessionData.users[existingUserIndex] = user;
-    } else {
-        sessionData.users.push(user);
+    const config = {
+        type: Phaser.AUTO,
+        parent: 'game-container',
+        width: width,
+        height: height,
+        backgroundColor: '#f0f0f0',
+        scene: [ClassroomScene, GardenScene],
+    };
+
+    game = new Phaser.Game(config);
+}
+
+function switchToGarden() {
+    if (!game) return;
+
+    currentLocation = 'garden';
+    const rooms = getRoomsData();
+
+    game.scene.stop('ClassroomScene');
+    game.scene.stop('GardenScene');
+    game.scene.start('GardenScene', {
+        userId: currentUser.id,
+        gender: currentUser.gender,
+        nickname: currentUser.characterName,
+        rooms: rooms,
+        onPositionUpdate: (x, y) => {
+            updateUserPosition(x, y, 'garden');
+        },
+        onEnterRoom: (roomIndex) => {
+            enterRoom(roomIndex);
+        }
+    });
+
+    document.getElementById('location-title').textContent = 'お庭';
+    document.getElementById('enter-classroom-btn').style.display = 'none';
+}
+
+function switchToClassroom() {
+    if (!game) return;
+
+    currentLocation = 'classroom';
+    const room = getCurrentRoom();
+
+    game.scene.stop('ClassroomScene');
+    game.scene.stop('GardenScene');
+    game.scene.start('ClassroomScene', {
+        userId: currentUser.id,
+        gender: currentUser.gender,
+        nickname: currentUser.characterName,
+        onPositionUpdate: (x, y) => {
+            updateUserPosition(x, y, 'classroom');
+        }
+    });
+
+    document.getElementById('location-title').textContent = `教室: ${room.name}`;
+    document.getElementById('enter-classroom-btn').style.display = 'none';
+
+    // 黒板の内容を復元
+    if (room.currentHaikuDisplay) {
+        setTimeout(() => updateBlackboard(room.currentHaikuDisplay), 100);
     }
 
-    saveToLocalStorage(STORAGE_KEYS.SESSION_DATA, sessionData);
-    broadcastMessage({ type: 'users_update', users: sessionData.users });
+    updateOtherPlayersInGame();
 }
 
-function removeUser(userId) {
-    const sessionData = getSessionData();
-    sessionData.users = sessionData.users.filter(u => u.id !== userId);
-    saveToLocalStorage(STORAGE_KEYS.SESSION_DATA, sessionData);
-    broadcastMessage({ type: 'users_update', users: sessionData.users });
+function enterRoom(roomIndex) {
+    const rooms = getRoomsData();
+    const room = rooms[roomIndex];
+
+    if (!room.hasHost) {
+        alert('この句会場は使用できません。');
+        return;
+    }
+
+    currentRoomIndex = roomIndex;
+
+    // ユーザーを句会場に追加
+    const userInRoom = room.users.find(u => u.id === currentUser.id);
+    if (!userInRoom) {
+        room.users.push({
+            ...currentUser,
+            location: 'classroom',
+            x: 300,
+            y: 300
+        });
+        saveRoomsData(rooms);
+    }
+
+    switchToClassroom();
+    loadRoomData(roomIndex);
 }
 
-function updateUserPosition(userId, x, y, location) {
-    const sessionData = getSessionData();
-    const user = sessionData.users.find(u => u.id === userId);
+function updateUserPosition(x, y, location) {
+    const rooms = getRoomsData();
+    const room = rooms[currentRoomIndex];
+
+    const user = room.users.find(u => u.id === currentUser.id);
     if (user) {
         user.x = x;
         user.y = y;
         user.location = location;
-        saveToLocalStorage(STORAGE_KEYS.SESSION_DATA, sessionData);
-        broadcastMessage({ type: 'users_update', users: sessionData.users });
+        saveRoomsData(rooms);
     }
 }
 
-// メッセージ管理
-function getMessages() {
-    return loadFromLocalStorage(STORAGE_KEYS.MESSAGES) || [];
+function updateGameScene() {
+    if (!game) return;
+
+    const gardenScene = game.scene.getScene('GardenScene');
+    if (gardenScene && gardenScene.scene.isActive()) {
+        const rooms = getRoomsData();
+        gardenScene.updateBuildings(rooms);
+    }
+
+    updateOtherPlayersInGame();
 }
 
-function addMessage(message) {
-    const messages = getMessages();
-    messages.push(message);
-    saveToLocalStorage(STORAGE_KEYS.MESSAGES, messages);
-    broadcastMessage({ type: 'chat_message', message });
-    displayMessage(message);
+function updateOtherPlayersInGame() {
+    if (!game) return;
+
+    const rooms = getRoomsData();
+    const room = rooms[currentRoomIndex];
+
+    const classroomScene = game.scene.getScene('ClassroomScene');
+    const gardenScene = game.scene.getScene('GardenScene');
+
+    if (classroomScene && classroomScene.scene.isActive()) {
+        classroomScene.updateOtherPlayers(room.users);
+    }
+
+    if (gardenScene && gardenScene.scene.isActive()) {
+        gardenScene.updateOtherPlayers(room.users);
+    }
 }
 
-function displayMessage(message) {
+function updateBlackboard(content) {
+    if (game && currentLocation === 'classroom') {
+        const classroomScene = game.scene.getScene('ClassroomScene');
+        if (classroomScene && classroomScene.scene.isActive()) {
+            if (content) {
+                classroomScene.displayHaiku(content);
+            } else {
+                classroomScene.clearBlackboard();
+            }
+        }
+    }
+}
+
+// UI更新
+function updateUI() {
+    const rooms = getRoomsData();
+    const room = rooms[currentRoomIndex];
+
+    // メッセージ表示
+    const messagesContainer = document.getElementById('messages-container');
+    messagesContainer.innerHTML = '';
+    room.messages.forEach(msg => {
+        displayMessage(msg, currentRoomIndex);
+    });
+
+    // 俳句一覧表示
+    const haikuList = document.getElementById('haiku-list');
+    if (haikuList) {
+        haikuList.innerHTML = '';
+        room.haikus.forEach(haiku => {
+            displayHaiku(haiku, currentRoomIndex);
+        });
+    }
+}
+
+function displayMessage(message, roomIndex) {
+    if (roomIndex !== currentRoomIndex) return;
+
     const messagesContainer = document.getElementById('messages-container');
     const messageDiv = document.createElement('div');
     messageDiv.className = 'message';
@@ -131,20 +297,9 @@ function displayMessage(message) {
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
 
-// 俳句管理
-function getHaikus() {
-    return loadFromLocalStorage(STORAGE_KEYS.HAIKUS) || [];
-}
+function displayHaiku(haiku, roomIndex) {
+    if (roomIndex !== currentRoomIndex) return;
 
-function addHaiku(haiku) {
-    const haikus = getHaikus();
-    haikus.push(haiku);
-    saveToLocalStorage(STORAGE_KEYS.HAIKUS, haikus);
-    broadcastMessage({ type: 'haiku_submitted', haiku });
-    displayHaiku(haiku);
-}
-
-function displayHaiku(haiku) {
     const haikuList = document.getElementById('haiku-list');
     if (!haikuList) return;
 
@@ -161,8 +316,10 @@ function displayHaiku(haiku) {
 }
 
 function displayHaikuOnBlackboard(content) {
-    saveToLocalStorage(STORAGE_KEYS.CURRENT_HAIKU_DISPLAY, content);
-    broadcastMessage({ type: 'haiku_displayed', content });
+    const rooms = getRoomsData();
+    const room = rooms[currentRoomIndex];
+    room.currentHaikuDisplay = content;
+    saveRoomsData(rooms);
     updateBlackboard(content);
 
     // チャットにも表示
@@ -177,115 +334,38 @@ function displayHaikuOnBlackboard(content) {
     addMessage(message);
 }
 
-function updateBlackboard(content) {
-    if (game && currentLocation === 'classroom') {
-        const classroomScene = game.scene.getScene('ClassroomScene');
-        if (classroomScene && classroomScene.scene.isActive()) {
-            if (content) {
-                classroomScene.displayHaiku(content);
-            } else {
-                classroomScene.clearBlackboard();
-            }
-        }
-    }
+function addMessage(message) {
+    const rooms = getRoomsData();
+    const room = rooms[currentRoomIndex];
+    room.messages.push(message);
+    saveRoomsData(rooms);
+    broadcastMessage({ type: 'chat_message', message, roomIndex: currentRoomIndex });
+    displayMessage(message, currentRoomIndex);
 }
 
-// BroadcastChannel設定
-function setupBroadcastChannel() {
-    broadcastChannel = new BroadcastChannel('senku_kukaijo_channel');
-
-    broadcastChannel.onmessage = (event) => {
-        const data = event.data;
-
-        switch (data.type) {
-            case 'users_update':
-                updateOtherPlayersInGame(data.users);
-                break;
-            case 'chat_message':
-                displayMessage(data.message);
-                break;
-            case 'haiku_submitted':
-                displayHaiku(data.haiku);
-                break;
-            case 'haiku_displayed':
-                updateBlackboard(data.content);
-                break;
-            case 'room_name_updated':
-                updateRoomNameDisplay(data.roomName);
-                break;
-        }
-    };
+function addHaiku(haiku) {
+    const rooms = getRoomsData();
+    const room = rooms[currentRoomIndex];
+    room.haikus.push(haiku);
+    saveRoomsData(rooms);
+    broadcastMessage({ type: 'haiku_submitted', haiku, roomIndex: currentRoomIndex });
+    displayHaiku(haiku, currentRoomIndex);
 }
 
-function broadcastMessage(data) {
-    if (broadcastChannel) {
-        broadcastChannel.postMessage(data);
-    }
-}
+function loadRoomData(roomIndex) {
+    const rooms = getRoomsData();
+    const room = rooms[roomIndex];
 
-// Phaser.jsゲーム初期化
-function initGame() {
-    const gameContainer = document.getElementById('game-container');
-    const width = gameContainer.clientWidth;
-    const height = gameContainer.clientHeight;
+    // メッセージをロード
+    const messagesContainer = document.getElementById('messages-container');
+    messagesContainer.innerHTML = '';
+    room.messages.forEach(msg => displayMessage(msg, roomIndex));
 
-    const config = {
-        type: Phaser.AUTO,
-        parent: 'game-container',
-        width: width || 600,
-        height: height || 600,
-        backgroundColor: '#f0f0f0',
-        scene: [ClassroomScene, GardenScene],
-    };
-
-    game = new Phaser.Game(config);
-}
-
-function switchScene(sceneName) {
-    if (!game) return;
-
-    game.scene.stop('ClassroomScene');
-    game.scene.stop('GardenScene');
-    game.scene.start(sceneName, {
-        userId: currentUser.id,
-        onPositionUpdate: (x, y) => {
-            updateUserPosition(currentUser.id, x, y, currentLocation);
-        }
-    });
-
-    // 既存ユーザーを表示
-    updateOtherPlayersInGame(getSessionData().users);
-
-    // 黒板の内容を復元
-    if (sceneName === 'ClassroomScene') {
-        const currentHaikuDisplay = loadFromLocalStorage(STORAGE_KEYS.CURRENT_HAIKU_DISPLAY);
-        if (currentHaikuDisplay) {
-            setTimeout(() => updateBlackboard(currentHaikuDisplay), 100);
-        }
-    }
-}
-
-function updateOtherPlayersInGame(users) {
-    if (!game) return;
-
-    const classroomScene = game.scene.getScene('ClassroomScene');
-    const gardenScene = game.scene.getScene('GardenScene');
-
-    if (classroomScene && classroomScene.scene.isActive()) {
-        classroomScene.updateOtherPlayers(users);
-    }
-
-    if (gardenScene && gardenScene.scene.isActive()) {
-        gardenScene.updateOtherPlayers(users);
-    }
-}
-
-// UI更新
-function updateRoomNameDisplay(roomName) {
-    const sessionData = updateSessionData({ roomName });
-    const locationTitle = document.getElementById('location-title');
-    if (currentLocation === 'classroom') {
-        locationTitle.textContent = `教室: ${roomName}`;
+    // 俳句をロード
+    const haikuList = document.getElementById('haiku-list');
+    if (haikuList) {
+        haikuList.innerHTML = '';
+        room.haikus.forEach(haiku => displayHaiku(haiku, roomIndex));
     }
 }
 
@@ -317,12 +397,22 @@ function setupUIForRole(role) {
     }
 }
 
+function getRoleName(role) {
+    switch (role) {
+        case 'host': return '主催者';
+        case 'judge': return '選者';
+        case 'participant': return '一般';
+        default: return '';
+    }
+}
+
 // ログイン処理
 document.addEventListener('DOMContentLoaded', () => {
     const loginScreen = document.getElementById('login-screen');
     const mainScreen = document.getElementById('main-screen');
     const loginForm = document.getElementById('login-form');
     const roleSelect = document.getElementById('role-select');
+    const genderSelect = document.getElementById('gender-select');
     const roomNameGroup = document.getElementById('room-name-group');
     const continueSection = document.getElementById('continue-section');
     const continueBtn = document.getElementById('continue-btn');
@@ -338,11 +428,13 @@ document.addEventListener('DOMContentLoaded', () => {
         savedInfo.textContent = `(${savedUserData.name} / ${savedUserData.characterName} / ${getRoleName(savedUserData.role)})`;
 
         continueBtn.addEventListener('click', () => {
+            const roomNameInput = document.getElementById('room-name-input').value;
             loginWithData(
                 savedUserData.name,
                 savedUserData.characterName,
                 savedUserData.role,
-                savedUserData.role === 'host' ? (getSessionData().roomName || '俳句句会') : null
+                savedUserData.gender || 'male',
+                savedUserData.role === 'host' ? roomNameInput : null
             );
         });
     }
@@ -362,16 +454,17 @@ document.addEventListener('DOMContentLoaded', () => {
         const name = document.getElementById('name-input').value;
         const characterName = document.getElementById('character-name-input').value;
         const role = roleSelect.value;
+        const gender = genderSelect.value;
         const roomName = document.getElementById('room-name-input').value;
 
         if (!name || !characterName) return;
 
-        loginWithData(name, characterName, role, role === 'host' ? roomName : null);
+        loginWithData(name, characterName, role, gender, role === 'host' ? roomName : null);
     });
 
-    function loginWithData(name, characterName, role, roomName) {
+    function loginWithData(name, characterName, role, gender, roomName) {
         // ユーザーデータ保存
-        saveUserData(name, characterName, role);
+        saveUserData(name, characterName, role, gender);
 
         // 現在のユーザーを設定
         currentUser = {
@@ -379,24 +472,35 @@ document.addEventListener('DOMContentLoaded', () => {
             name,
             characterName,
             role,
+            gender,
             location: 'garden',
             x: 300,
             y: 300
         };
 
-        // セッションに追加
-        addUser(currentUser);
-
-        // 教室名を更新
+        // 主催者の場合、句会場を作成または更新
         if (role === 'host' && roomName) {
-            updateRoomNameDisplay(roomName);
+            const rooms = getRoomsData();
+            let roomIndex = rooms.findIndex(r => !r.hasHost);
+
+            if (roomIndex === -1) {
+                alert('句会場がいっぱいです。');
+                return;
+            }
+
+            rooms[roomIndex].name = roomName;
+            rooms[roomIndex].hasHost = true;
+            rooms[roomIndex].hostId = currentUser.id;
+            rooms[roomIndex].users.push(currentUser);
+            currentRoomIndex = roomIndex;
+            saveRoomsData(rooms);
         }
 
         // UI設定
         setupUIForRole(role);
 
         // ログイン情報表示
-        document.getElementById('login-info').textContent = `${characterName} でログイン中`;
+        document.getElementById('login-info').textContent = `${getRoleName(role)}：${characterName} ログイン中`;
 
         // 画面切替
         loginScreen.style.display = 'none';
@@ -405,12 +509,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // ゲーム初期化
         initGame();
         setTimeout(() => {
-            switchScene('GardenScene');
+            switchToGarden();
         }, 100);
-
-        // 既存のメッセージ・俳句を表示
-        getMessages().forEach(displayMessage);
-        getHaikus().forEach(displayHaiku);
 
         setupEventListeners();
     }
@@ -487,30 +587,27 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        // 教室に入るボタン
-        document.getElementById('enter-classroom-btn').addEventListener('click', () => {
-            currentLocation = 'classroom';
-            switchScene('ClassroomScene');
-            updateUserPosition(currentUser.id, 300, 300, 'classroom');
-
-            document.getElementById('location-title').textContent = `教室: ${getSessionData().roomName}`;
-            document.getElementById('enter-classroom-btn').style.display = 'none';
-        });
-
         // お庭に行くボタン
         document.getElementById('go-garden-btn').addEventListener('click', () => {
-            currentLocation = 'garden';
-            switchScene('GardenScene');
-            updateUserPosition(currentUser.id, 300, 300, 'garden');
-
-            document.getElementById('location-title').textContent = 'お庭';
-            document.getElementById('enter-classroom-btn').style.display = 'block';
+            switchToGarden();
         });
 
         // 教室から出るボタン
         document.getElementById('leave-btn').addEventListener('click', () => {
             if (confirm('本当に退出しますか？')) {
-                removeUser(currentUser.id);
+                const rooms = getRoomsData();
+                const room = rooms[currentRoomIndex];
+
+                // ユーザーを削除
+                room.users = room.users.filter(u => u.id !== currentUser.id);
+
+                // 主催者の場合、句会場をクリア
+                if (currentUser.role === 'host' && room.hostId === currentUser.id) {
+                    room.hasHost = false;
+                    room.hostId = null;
+                }
+
+                saveRoomsData(rooms);
                 location.reload();
             }
         });
@@ -519,26 +616,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const endSessionBtn = document.getElementById('end-session-btn');
         if (endSessionBtn) {
             endSessionBtn.addEventListener('click', () => {
-                if (confirm('句会を終了しますか？全員のデータがクリアされます。')) {
-                    // 全データをクリア
-                    localStorage.removeItem(STORAGE_KEYS.SESSION_DATA);
-                    localStorage.removeItem(STORAGE_KEYS.MESSAGES);
-                    localStorage.removeItem(STORAGE_KEYS.HAIKUS);
-                    localStorage.removeItem(STORAGE_KEYS.CURRENT_HAIKU_DISPLAY);
+                if (confirm('句会を終了しますか？データは保存されます。')) {
+                    const rooms = getRoomsData();
+                    const room = rooms[currentRoomIndex];
 
-                    broadcastMessage({ type: 'session_ended' });
+                    // ユーザーをクリア（データは残す）
+                    room.users = [];
+                    room.hasHost = false;
+                    room.hostId = null;
+
+                    saveRoomsData(rooms);
                     location.reload();
                 }
             });
-        }
-    }
-
-    function getRoleName(role) {
-        switch (role) {
-            case 'host': return '主催者';
-            case 'judge': return '選者';
-            case 'participant': return '一般参加者';
-            default: return '';
         }
     }
 });
